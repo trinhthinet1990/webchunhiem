@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Quản Lý Lớp Chủ Nhiệm Thông Minh (Homeroom 360°) - AI Architecture Studio</title>
+  
+  <!-- Fonts & Tailwind CSS CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- ==================== TOP NAVBAR ==================== -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="App.switchTab('architecture')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-shapes text-white text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-extrabold text-base tracking-tight text-white">HOMEROOM <span class="text-indigo-400">360°</span></span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30">AI Architecture</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Lớp 12A1 • Chuyên Ban Tự Nhiên (GVCN: Cô Hoàng Mai Anh)</p>
+        </div>
+      </div>
+
+      <!-- Center & Right: Role Switcher & RBAC Indicator -->
+      <div class="flex items-center space-x-4">
+        
+        <!-- Live Role Badge -->
+        <div id="current-role-badge" class="hidden sm:flex items-center px-3 py-1 text-xs rounded-full border font-semibold">
+          <!-- Injected via app.js -->
+        </div>
+
+        <!-- Role Switcher Dropdown (Simulates RBAC Auth Guard in real-time) -->
+        <div class="flex items-center space-x-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700">
+          <span class="text-xs text-slate-400 pl-2 hidden md:inline"><i class="fa-solid fa-user-shield text-indigo-400 mr-1"></i>Vai trò:</span>
+          <select id="global-role-selector" class="bg-slate-900 text-xs text-white rounded-lg px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:border-indigo-500 font-medium">
+            <option value="teacher">👑 GVCN (Cô Mai Anh - Toàn quyền)</option>
+            <option value="monitor">⭐ Cán sự lớp (Lớp trưởng Đức Huy)</option>
+            <option value="parent_student">👨‍👩‍👧 Cổng Phụ huynh (Bác Nam - Em Bảo Ngọc)</option>
+          </select>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Navigation Tab Pills -->
+    <div class="bg-slate-900/60 border-t border-slate-800/80 px-4 sm:px-6 lg:px-8 py-2 overflow-x-auto">
+      <nav class="max-w-7xl mx-auto flex space-x-1.5 text-xs font-semibold whitespace-nowrap">
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition" data-tab="architecture" onclick="App.switchTab('architecture')">
+          <i class="fa-solid fa-sitemap text-indigo-400"></i>
+          <span>Sơ Đồ Kiến Trúc</span>
+        </button>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition" data-tab="seatmap" onclick="App.switchTab('seatmap')">
+          <i class="fa-solid fa-chair text-sky-400"></i>
+          <span>Sơ Đồ Chỗ Ngồi Thông Minh</span>
+        </button>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition" data-tab="attendance" onclick="App.switchTab('attendance')">
+          <i class="fa-solid fa-clipboard-user text-emerald-400"></i>
+          <span>Điểm Danh Chuyên Cần</span>
+        </button>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition" data-tab="gamification" onclick="App.switchTab('gamification')">
+          <i class="fa-solid fa-trophy text-amber-400"></i>
+          <span>Thi Đua & Nề Nếp (Points)</span>
+        </button>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition" data-tab="academic" onclick="App.switchTab('academic')">
+          <i class="fa-solid fa-chart-line text-purple-400"></i>
+          <span>Học Lực & Cảnh Báo</span>
+        </button>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition" data-tab="ai_report" onclick="App.switchTab('ai_report')">
+          <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i>
+          <span>AI Report Writer</span>
+        </button>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition" data-tab="communication" onclick="App.switchTab('communication')">
+          <i class="fa-solid fa-paper-plane text-cyan-400"></i>
+          <span>Kênh Phụ Huynh & Đơn Nghỉ</span>
+        </button>
+
+        <div class="h-5 w-[1px] bg-slate-700 my-auto mx-1"></div>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition text-amber-400 border border-amber-500/20" data-tab="monitor_portal" onclick="App.switchTab('monitor_portal')">
+          <i class="fa-solid fa-id-badge"></i>
+          <span>Cổng Cán Sự Lớp</span>
+        </button>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition text-sky-400 border border-sky-500/20" data-tab="parent_portal" onclick="App.switchTab('parent_portal')">
+          <i class="fa-solid fa-house-user"></i>
+          <span>Cổng Phụ Huynh</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- TAB 1: ARCHITECTURE VISUALIZER -->
+    <div id="tab-pane-architecture" class="tab-view-pane space-y-6">
+      <div id="architecture-container">
+        <!-- Rendered via architecture.js -->
+      </div>
+    </div>
+
+    <!-- TAB 2: SMART SEATMAP -->
+    <div id="tab-pane-seatmap" class="tab-view-pane hidden space-y-6">
+      <!-- Toolbar for Smart SeatMap -->
+      <div class="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center space-x-3">
+          <i class="fa-solid fa-wand-sparkles text-indigo-400 text-lg"></i>
+          <div>
+            <h3 class="font-bold text-sm text-white">Profile & Smart SeatMap Controller</h3>
+            <p class="text-xs text-slate-400">Kéo thả để đổi chỗ ngồi học sinh trực tiếp, hoặc dùng thuật toán AI tự động sắp xếp tối ưu</p>
+          </div>
+        </div>
+
+        <!-- Smart Auto Arrange Strategies -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs text-slate-400 mr-1">Thuật toán AI xếp chỗ:</span>
+          <button onclick="TeacherDashboard.triggerAutoArrange('vision_height')" 
+                  class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 flex items-center space-x-1.5 transition">
+            <span>👓 Thị lực & Chiều cao</span>
+          </button>
+          <button onclick="TeacherDashboard.triggerAutoArrange('peer_tutoring')" 
+                  class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 flex items-center space-x-1.5 transition">
+            <span>🤝 Đôi bạn cùng tiến (Giỏi kèm Khá/TB)</span>
+          </button>
+          <button onclick="TeacherDashboard.triggerAutoArrange('conduct_balance')" 
+                  class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 flex items-center space-x-1.5 transition">
+            <span>⚖️ Cân bằng nề nếp & Giới tính</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SeatMap Grid Container -->
+      <div id="seatmap-grid-container" class="bg-slate-900/90 rounded-2xl p-6 border border-slate-800 shadow-2xl">
+        <!-- Injected via teacher_dashboard.js -->
+      </div>
+    </div>
+
+    <!-- TAB 3: ATTENDANCE -->
+    <div id="tab-pane-attendance" class="tab-view-pane hidden space-y-6">
+      <div id="attendance-container">
+        <!-- Injected via teacher_dashboard.js -->
+      </div>
+    </div>
+
+    <!-- TAB 4: GAMIFICATION -->
+    <div id="tab-pane-gamification" class="tab-view-pane hidden space-y-6">
+      <div id="gamification-container">
+        <!-- Injected via teacher_dashboard.js -->
+      </div>
+    </div>
+
+    <!-- TAB 5: ACADEMIC -->
+    <div id="tab-pane-academic" class="tab-view-pane hidden space-y-6">
+      <div id="academic-container">
+        <!-- Injected via teacher_dashboard.js -->
+      </div>
+    </div>
+
+    <!-- TAB 6: AI REPORT -->
+    <div id="tab-pane-ai_report" class="tab-view-pane hidden space-y-6">
+      <div id="ai-report-container">
+        <!-- Injected via teacher_dashboard.js -->
+      </div>
+    </div>
+
+    <!-- TAB 7: COMMUNICATION -->
+    <div id="tab-pane-communication" class="tab-view-pane hidden space-y-6">
+      <div id="communication-container">
+        <!-- Injected via teacher_dashboard.js -->
+      </div>
+    </div>
+
+    <!-- TAB 8: CLASS MONITOR PORTAL -->
+    <div id="tab-pane-monitor_portal" class="tab-view-pane hidden space-y-6">
+      <div id="monitor-portal-container">
+        <!-- Injected via monitor_portal.js -->
+      </div>
+    </div>
+
+    <!-- TAB 9: PARENT & STUDENT PORTAL -->
+    <div id="tab-pane-parent_portal" class="tab-view-pane hidden space-y-6">
+      <div id="parent-portal-container">
+        <!-- Injected via parent_portal.js -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== STUDENT 360 MODAL ==================== -->
+  <div id="student-360-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative">
+      <button onclick="TeacherDashboard.closeStudent360()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-2xl transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div id="student-360-content">
+        <!-- Injected via teacher_dashboard.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/architecture.js"></script>
+  <script src="/static/js/teacher_dashboard.js"></script>
+  <script src="/static/js/monitor_portal.js"></script>
+  <script src="/static/js/parent_portal.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
