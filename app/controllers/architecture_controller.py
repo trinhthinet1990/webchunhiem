@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from typing import Dict, Any
-from app.database import query_one, query_all
+from app.database import query_one, query_all, is_postgres_active
 from app.middleware.rbac_guard import GATEWAY_AUDIT_LOGS, get_current_user_context
 
 router = APIRouter(prefix="/api/architecture", tags=["Architecture & System Flow Explorer"])
@@ -11,7 +11,7 @@ def get_architecture_status(context: Dict[str, Any] = Depends(get_current_user_c
     Trả về toàn bộ trạng thái sống động của 4 Tầng Kiến Trúc theo đúng sơ đồ
     """
     students_count = query_one("SELECT COUNT(*) as c FROM students")["c"]
-    att_today = query_one("SELECT COUNT(*) as c FROM attendance_logs WHERE date = date('now')")["c"]
+    att_today = query_one("SELECT COUNT(*) as c FROM attendance_logs WHERE date = CURRENT_DATE")["c"]
     points_total = query_one("SELECT COUNT(*) as c FROM gamified_points_logs")["c"]
     ai_reports_cnt = query_one("SELECT COUNT(*) as c FROM ai_reports")["c"]
     comm_cnt = query_one("SELECT COUNT(*) as c FROM parent_communications")["c"]
@@ -119,7 +119,7 @@ def get_architecture_status(context: Dict[str, Any] = Depends(get_current_user_c
                         "id": "homeroom_db",
                         "title": "Main Homeroom DB",
                         "desc": "Lưu trữ tập trung hồ sơ học sinh, sơ đồ chỗ ngồi, lịch sử điểm danh, điểm thi đua, học bạ",
-                        "engine": "SQLite Relational Storage",
+                        "engine": "Supabase PostgreSQL Cloud" if is_postgres_active() else "SQLite Relational Storage (Cục bộ)",
                         "status": "CONNECTED",
                         "tables": ["users", "students", "attendance_logs", "gamified_points_logs", "academic_grades", "ai_reports", "parent_communications", "absence_requests"]
                     }
