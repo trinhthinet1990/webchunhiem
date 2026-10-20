@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import Dict, Any
 from app.database import query_one, query_all, is_postgres_active
+from app.config import SUPABASE_URL
 from app.middleware.rbac_guard import GATEWAY_AUDIT_LOGS, get_current_user_context
 
 router = APIRouter(prefix="/api/architecture", tags=["Architecture & System Flow Explorer"])
@@ -119,7 +120,8 @@ def get_architecture_status(context: Dict[str, Any] = Depends(get_current_user_c
                         "id": "homeroom_db",
                         "title": "Main Homeroom DB",
                         "desc": "Lưu trữ tập trung hồ sơ học sinh, sơ đồ chỗ ngồi, lịch sử điểm danh, điểm thi đua, học bạ",
-                        "engine": "Supabase PostgreSQL Cloud" if is_postgres_active() else "SQLite Relational Storage (Cục bộ)",
+                        "engine": "Supabase PostgreSQL Cloud" if is_postgres_active() else ("Supabase Cloud (REST Connected)" if SUPABASE_URL else "SQLite Relational Storage (Cục bộ)"),
+                        "supabase_url": SUPABASE_URL or None,
                         "status": "CONNECTED",
                         "tables": ["users", "students", "attendance_logs", "gamified_points_logs", "academic_grades", "ai_reports", "parent_communications", "absence_requests"]
                     }
