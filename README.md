@@ -38,15 +38,19 @@ Hệ thống được thiết kế chuẩn mực theo mô hình phân tầng tro
 - **Parent Communication Worker**: Worker tự động phát thông báo đa kênh (Zalo OA, SMS Gateway, Cổng phụ huynh) khi học sinh vắng không phép hoặc định kỳ phát báo cáo tuần.
 
 ### 4. Tầng Cơ Sở Dữ Liệu (Database)
-- **Main Homeroom DB**: Lưu trữ tập trung bằng cơ sở dữ liệu quan hệ SQLite với 8 bảng dữ liệu:
-  - `users`: Tài khoản và vai trò RBAC.
-  - `students`: Hồ sơ 30 học sinh lớp 12A1.
-  - `attendance_logs`: Lịch sử điểm danh chuyên cần.
+- **Main Homeroom DB**: Hỗ trợ linh hoạt cả **Supabase Cloud (PostgreSQL)** lẫn **SQLite (Cục bộ)** với 8 bảng dữ liệu quan hệ:
+  - `users`: Tài khoản và vai trò RBAC (`teacher`, `monitor`, `parent_student`).
+  - `students`: Hồ sơ 30 học sinh lớp 12A1 & vị trí ma trận chỗ ngồi.
+  - `attendance_logs`: Lịch sử điểm danh chuyên cần theo buổi/tiết.
   - `gamified_points_logs`: Nhật ký cộng/trừ điểm thi đua.
-  - `academic_grades`: Điểm số chi tiết các môn học.
+  - `academic_grades`: Bảng điểm chi tiết 5 môn học chính (Toán, Văn, Anh, Lý, Hóa).
   - `ai_reports`: Bản nhận xét sư phạm tự động do AI sinh ra.
-  - `parent_communications`: Lịch sử thông báo gửi tới phụ huynh.
+  - `parent_communications`: Lịch sử thông báo gửi tới phụ huynh (Zalo OA, SMS Gateway, Cổng phụ huynh).
   - `absence_requests`: Đơn xin phép nghỉ học trực tuyến.
+- **Tích hợp Supabase Cloud**:
+  - Hỗ trợ kết nối qua chuỗi kết nối PostgreSQL URI (`DATABASE_URL`) và `supabase-py` SDK.
+  - Cung cấp sẵn file [**`supabase_schema.sql`**](./supabase_schema.sql) để khởi tạo toàn bộ schema và dữ liệu mẫu chỉ với 1 click trong Supabase SQL Editor.
+  - Cấu hình dễ dàng thông qua file [**`.env`**](./.env.example). Tự động fallback sang SQLite nếu chưa cấu hình Cloud.
 
 ---
 
