@@ -2,6 +2,50 @@
  * Authentication & Supabase Synchronization Module
  * Handles Email/Username Registration, Specific Class Duties, and Conditional Student Linking
  */
+
+// Đảm bảo API.login và API.register luôn sẵn sàng ngay cả khi trình duyệt lưu cache api.js cũ
+if (typeof API !== 'undefined') {
+  if (typeof API.register !== 'function') {
+    API.register = async function(payload) {
+      const res = await this.request('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      if (res && res.token && res.user) {
+        if (typeof this.setSession === 'function') {
+          this.setSession(res.token, res.user);
+        } else {
+          localStorage.setItem('homeroom_token', res.token);
+          localStorage.setItem('homeroom_user', JSON.stringify(res.user));
+          this.token = res.token;
+          this.currentUser = res.user;
+        }
+      }
+      return res;
+    };
+  }
+
+  if (typeof API.login !== 'function') {
+    API.login = async function(username, password) {
+      const res = await this.request('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username, password })
+      });
+      if (res && res.token && res.user) {
+        if (typeof this.setSession === 'function') {
+          this.setSession(res.token, res.user);
+        } else {
+          localStorage.setItem('homeroom_token', res.token);
+          localStorage.setItem('homeroom_user', JSON.stringify(res.user));
+          this.token = res.token;
+          this.currentUser = res.user;
+        }
+      }
+      return res;
+    };
+  }
+}
+
 const AuthModal = {
   studentsLoaded: false,
 
@@ -167,7 +211,26 @@ const AuthModal = {
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang xác thực...';
 
     try {
-      const res = await API.login(ident, password);
+      let res;
+      if (typeof API !== 'undefined' && typeof API.login === 'function') {
+        res = await API.login(ident, password);
+      } else {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: ident, password })
+        });
+        res = await resp.json();
+        if (!resp.ok) {
+          throw new Error(res.detail || 'Email hoặc mật khẩu không chính xác.');
+        }
+        localStorage.setItem('homeroom_token', res.token);
+        localStorage.setItem('homeroom_user', JSON.stringify(res.user));
+        if (typeof API !== 'undefined') {
+          API.token = res.token;
+          API.currentUser = res.user;
+        }
+      }
       showToast(res.message || 'Đăng nhập thành công!', 'success');
       this.close();
       this.renderNavUser();
@@ -249,7 +312,27 @@ const AuthModal = {
         student_id: studentId
       };
 
-      const res = await API.register(payload);
+      let res;
+      if (typeof API !== 'undefined' && typeof API.register === 'function') {
+        res = await API.register(payload);
+      } else {
+        const resp = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        res = await resp.json();
+        if (!resp.ok) {
+          throw new Error(res.detail || 'Đăng ký thất bại. Vui lòng thử lại.');
+        }
+        localStorage.setItem('homeroom_token', res.token);
+        localStorage.setItem('homeroom_user', JSON.stringify(res.user));
+        if (typeof API !== 'undefined') {
+          API.token = res.token;
+          API.currentUser = res.user;
+        }
+      }
+
       showToast(res.message || 'Đăng ký tài khoản thành công và đã lưu tại Supabase!', 'success');
       this.close();
       this.renderNavUser();
