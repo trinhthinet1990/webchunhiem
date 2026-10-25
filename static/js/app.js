@@ -53,14 +53,32 @@ const App = {
     if (roleSelector) roleSelector.value = API.currentRole;
 
     if (roleBadge) {
-      const config = {
-        'teacher': { text: '👑 GVCN (Toàn quyền)', class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
-        'monitor': { text: '⭐ Cán sự lớp (Hỗ trợ)', class: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-        'parent_student': { text: '👨‍👩‍👧 Cổng Phụ Huynh', class: 'bg-sky-500/20 text-sky-300 border-sky-500/40' }
-      }[API.currentRole] || { text: API.currentRole, class: 'bg-slate-700 text-slate-300' };
+      let roleText = '👑 GVCN (Toàn quyền)';
+      let badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
 
-      roleBadge.className = `px-3 py-1 text-xs rounded-full border font-semibold flex items-center space-x-1.5 ${config.class}`;
-      roleBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-current animate-pulse mr-1"></span> ${config.text}`;
+      if (API.currentUser && API.currentUser.role === API.currentRole) {
+        if (API.currentUser.duty) {
+          roleText = `⭐ ${API.currentUser.duty}`;
+          badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+        } else if (API.currentUser.role_label) {
+          roleText = API.currentUser.role_label;
+          if (API.currentUser.role === 'teacher') badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+          else if (API.currentUser.role === 'monitor') badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+          else badgeClass = 'bg-sky-500/20 text-sky-300 border-sky-500/40';
+        }
+      } else {
+        const config = {
+          'teacher': { text: '👑 GVCN (Toàn quyền)', class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+          'monitor': { text: '⭐ Cán sự lớp (Hỗ trợ)', class: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+          'parent_student': { text: '👨‍👩‍👧 Cổng Phụ Huynh', class: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
+          'student': { text: '🎓 Học Sinh', class: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' }
+        }[API.currentRole] || { text: API.currentRole, class: 'bg-slate-700 text-slate-300' };
+        roleText = config.text;
+        badgeClass = config.class;
+      }
+
+      roleBadge.className = `px-3 py-1 text-xs rounded-full border font-semibold flex items-center space-x-1.5 ${badgeClass}`;
+      roleBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-current animate-pulse mr-1"></span> ${roleText}`;
     }
   },
 

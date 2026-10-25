@@ -8,6 +8,10 @@ const MonitorPortal = {
     if (!container) return;
 
     try {
+      const loggedUser = API.currentUser;
+      const officerName = loggedUser ? loggedUser.full_name : 'Nguyễn Đức Huy';
+      const officerDuty = (loggedUser && loggedUser.duty) ? loggedUser.duty : 'Lớp Trưởng';
+
       const [todayAtt, leaderboard] = await Promise.all([
         API.getTodayAttendance(),
         API.getLeaderboard()
@@ -21,9 +25,9 @@ const MonitorPortal = {
             <div>
               <div class="flex items-center space-x-2">
                 <span class="text-2xl">🎖️ ⚡</span>
-                <h3 class="text-xl font-bold text-white">Cổng Cán Sự Lớp • Điểm Danh & Nề Nếp Nhanh</h3>
+                <h3 class="text-xl font-bold text-white">Cổng Ban Cán Sự Lớp • Điểm Danh & Nề Nếp</h3>
               </div>
-              <p class="text-xs text-slate-300 mt-1">Đang đăng nhập với vai trò: <strong>Lớp Trưởng Nguyễn Đức Huy (Role: monitor)</strong></p>
+              <p class="text-xs text-slate-300 mt-1">Đang thực hiện nhiệm vụ: <strong class="text-amber-300 font-bold">${officerDuty} • ${officerName}</strong></p>
             </div>
             <div class="flex items-center space-x-3 text-xs">
               <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/30">

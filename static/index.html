@@ -280,10 +280,10 @@
         <form id="form-login" onsubmit="AuthModal.handleLogin(event)" class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1.5">
-              <i class="fa-solid fa-user text-indigo-400 mr-1"></i>Tên đăng nhập (Username)
+              <i class="fa-solid fa-envelope text-indigo-400 mr-1"></i>Email hoặc Tên đăng nhập
             </label>
             <div class="relative">
-              <input type="text" id="login-username" required placeholder="Ví dụ: gvcn_maianh hoặc lt_duchuy" autocomplete="username"
+              <input type="text" id="login-username" required placeholder="Nhập email (vd: nguyentruongthinh24102013@gmail.com) hoặc username..." autocomplete="username"
                      class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
             </div>
           </div>
@@ -319,7 +319,7 @@
                 <div class="text-[10px] text-slate-400 truncate">gvcn_maianh</div>
               </button>
               <button type="button" onclick="AuthModal.quickFill('lt_duchuy', '123456')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left transition group">
-                <div class="text-[11px] font-bold text-white group-hover:text-indigo-300">⭐ Cán sự</div>
+                <div class="text-[11px] font-bold text-white group-hover:text-indigo-300">⭐ Lớp Trưởng</div>
                 <div class="text-[10px] text-slate-400 truncate">lt_duchuy</div>
               </button>
               <button type="button" onclick="AuthModal.quickFill('ph_baongoc', '123456')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left transition group">
@@ -336,16 +336,17 @@
             <label class="block text-xs font-semibold text-slate-300 mb-1">
               <i class="fa-solid fa-id-card text-indigo-400 mr-1"></i>Họ và tên đầy đủ
             </label>
-            <input type="text" id="reg-fullname" required placeholder="Ví dụ: Thầy Trần Quang Vinh, Bác Đặng Thị Hoa..."
+            <input type="text" id="reg-fullname" required placeholder="Ví dụ: Nguyễn Trường Thịnh, Cô Hoàng Mai Anh..."
                    class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1">
-              <i class="fa-solid fa-at text-indigo-400 mr-1"></i>Tên đăng nhập (Username)
+              <i class="fa-solid fa-envelope text-indigo-400 mr-1"></i>Email đăng ký (Dùng để đăng nhập)
             </label>
-            <input type="text" id="reg-username" required placeholder="Viết liền không dấu, từ 3 ký tự (vd: quangvinh)" autocomplete="username"
+            <input type="email" id="reg-email" required placeholder="Ví dụ: nguyentruongthinh24102013@gmail.com" autocomplete="email"
                    class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+            <p class="text-[10px] text-slate-400 mt-0.5">Email sẽ là tên tài khoản định danh chính để đăng nhập hệ thống</p>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
@@ -382,20 +383,42 @@
             </label>
             <select id="reg-role" onchange="AuthModal.onRoleChange(this.value)"
                     class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-medium">
-              <option value="parent_student">👨‍👩‍👧 Phụ huynh / Học sinh (Tra cứu học lực, nề nếp, gửi đơn nghỉ)</option>
-              <option value="monitor">⭐ Cán sự lớp (Chấm điểm thi đua, hỗ trợ điểm danh)</option>
-              <option value="teacher">👑 Giáo viên chủ nhiệm (Toàn quyền quản trị & Xếp chỗ)</option>
+              <option value="parent_student">👨‍👩‍👧 Phụ huynh học sinh (Tra cứu học lực & gửi đơn nghỉ)</option>
+              <option value="monitor">⭐ Ban Cán Sự Lớp (Quản lý nề nếp, thi đua & chuyên cần)</option>
+              <option value="teacher">👑 Giáo viên chủ nhiệm (Toàn quyền quản trị & xếp chỗ)</option>
+              <option value="student">🎓 Học sinh (Tra cứu điểm số & rèn luyện cá nhân)</option>
             </select>
           </div>
 
-          <!-- Chọn học sinh liên kết (nếu là phụ huynh hoặc cán sự) -->
-          <div id="reg-student-picker">
-            <label class="block text-xs font-semibold text-slate-300 mb-1">
-              <i class="fa-solid fa-graduation-cap text-indigo-400 mr-1"></i>Học sinh liên kết (Lớp 12A1)
+          <!-- NHIỆM VỤ CỤ THỂ CỦA CÁN BỘ LỚP (Chỉ hiển thị khi chọn Ban Cán Sự Lớp) -->
+          <div id="reg-duty-group" class="hidden p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1.5 animate-in fade-in duration-200">
+            <label class="block text-xs font-semibold text-amber-300 mb-1">
+              <i class="fa-solid fa-id-badge text-amber-400 mr-1"></i>Chức danh & Nhiệm vụ cán bộ lớp *
+            </label>
+            <select id="reg-duty" class="w-full bg-slate-900 border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 font-medium">
+              <option value="Lớp trưởng">🌟 Lớp trưởng (Quản lý chung & Điều hành thi đua)</option>
+              <option value="Lớp phó Học tập">📚 Lớp phó Học tập (Học lực, truy bài & Đôi bạn cùng tiến)</option>
+              <option value="Lớp phó Nề nếp & Kỷ luật">⚖️ Lớp phó Nề nếp & Kỷ luật (Trang phục, giờ giấc & Chấm điểm nề nếp)</option>
+              <option value="Lớp phó Phong trào">🎨 Lớp phó Phong trào (Văn nghệ, thể thao & Hoạt động Đoàn)</option>
+              <option value="Lớp phó Lao động & CSVC">🧹 Lớp phó Lao động & CSVC (Trực nhật, vệ sinh & Thiết bị lớp)</option>
+              <option value="Thủ quỹ lớp">💰 Thủ quỹ lớp (Quản lý thu chi quỹ lớp & Phần thưởng thi đua)</option>
+              <option value="Tổ trưởng Tổ 1">📋 Tổ trưởng Tổ 1 (Theo dõi thành viên Tổ 1 - Bàn 1 & 2)</option>
+              <option value="Tổ trưởng Tổ 2">📋 Tổ trưởng Tổ 2 (Theo dõi thành viên Tổ 2 - Bàn 3 & 4)</option>
+              <option value="Tổ trưởng Tổ 3">📋 Tổ trưởng Tổ 3 (Theo dõi thành viên Tổ 3 - Bàn 5 & 6)</option>
+              <option value="Tổ trưởng Tổ 4">📋 Tổ trưởng Tổ 4 (Theo dõi thành viên Tổ 4)</option>
+            </select>
+            <p class="text-[10px] text-amber-200/80">Mỗi cán bộ lớp có nhiệm vụ riêng biệt được ghi rõ trong hồ sơ & phân quyền Cổng Cán Sự.</p>
+          </div>
+
+          <!-- CHỌN HỌC SINH LIÊN KẾT 1-1 (CHỈ DÀNH RIÊNG CHO PHỤ HUYNH) -->
+          <div id="reg-student-picker" class="space-y-1">
+            <label class="block text-xs font-semibold text-sky-300 mb-1">
+              <i class="fa-solid fa-graduation-cap text-sky-400 mr-1"></i>Học sinh liên kết (Con em trong lớp 12A1) *
             </label>
             <select id="reg-student-id" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-medium">
               <!-- Dynamically populated from API.getStudents() -->
             </select>
+            <p class="text-[10px] text-slate-400">Tài khoản Phụ huynh liên kết 1-1 để theo dõi tình hình học tập và gửi đơn xin nghỉ cho con.</p>
           </div>
 
           <!-- Supabase Synchronization Notice -->
@@ -403,7 +426,7 @@
             <i class="fa-solid fa-cloud-arrow-up text-emerald-400 text-sm mt-0.5"></i>
             <div class="text-[11px] leading-relaxed text-emerald-300">
               <strong class="font-bold">Đồng bộ tự động Supabase Cloud:</strong>
-              Tài khoản sẽ được mã hóa chuẩn PBKDF2 và ghi tức thì vào bảng <code class="text-white bg-emerald-950/60 px-1 py-0.5 rounded">users</code> trên Supabase.
+              Tài khoản email sẽ được mã hóa PBKDF2 và ghi tức thì vào bảng <code class="text-white bg-emerald-950/60 px-1 py-0.5 rounded">users</code> trên Supabase.
             </div>
           </div>
 

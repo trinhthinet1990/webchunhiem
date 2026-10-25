@@ -1,6 +1,6 @@
 /**
  * Authentication & Supabase Synchronization Module
- * Handles Login, Registration, Session Management, and Role Synchronization
+ * Handles Email/Username Registration, Specific Class Duties, and Conditional Student Linking
  */
 const AuthModal = {
   studentsLoaded: false,
@@ -11,6 +11,10 @@ const AuthModal = {
     this.clearAlert();
     this.switchTab(tab);
     modal.classList.remove('hidden');
+
+    // Trigger role change logic to display/hide fields correctly based on default selected role
+    const currentRole = document.getElementById('reg-role')?.value || 'parent_student';
+    this.onRoleChange(currentRole);
 
     if (!this.studentsLoaded) {
       this.populateStudentDropdown();
@@ -43,6 +47,9 @@ const AuthModal = {
       btnLogin.className = 'py-2 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white';
       formLogin.classList.add('hidden');
       formRegister.classList.remove('hidden');
+
+      const roleVal = document.getElementById('reg-role')?.value || 'parent_student';
+      this.onRoleChange(roleVal);
     }
   },
 
@@ -73,13 +80,32 @@ const AuthModal = {
     if (pInput) pInput.value = password;
   },
 
+  /**
+   * Xử lý hiển thị điều kiện theo vai trò:
+   * 1. Phụ huynh: BẮT BUỘC hiện chọn học sinh liên kết (1-1)
+   * 2. Ban cán sự lớp: BẮT BUỘC hiện chọn nhiệm vụ cụ thể của cán sự, ẨN học sinh liên kết
+   * 3. Giáo viên / Học sinh: Ẩn cả 2
+   */
   onRoleChange(role) {
-    const picker = document.getElementById('reg-student-picker');
-    if (!picker) return;
-    if (role === 'teacher') {
-      picker.classList.add('hidden');
-    } else {
-      picker.classList.remove('hidden');
+    const studentPicker = document.getElementById('reg-student-picker');
+    const dutyGroup = document.getElementById('reg-duty-group');
+
+    // 1. Chỉ phụ huynh mới liên kết 1-1 đến học sinh
+    if (studentPicker) {
+      if (role === 'parent_student') {
+        studentPicker.classList.remove('hidden');
+      } else {
+        studentPicker.classList.add('hidden');
+      }
+    }
+
+    // 2. Cán bộ lớp: Hiển thị chọn nhiệm vụ / chức danh cụ thể
+    if (dutyGroup) {
+      if (role === 'monitor') {
+        dutyGroup.classList.remove('hidden');
+      } else {
+        dutyGroup.classList.add('hidden');
+      }
     }
   },
 
@@ -89,17 +115,17 @@ const AuthModal = {
 
     try {
       const students = await API.getStudents();
-      select.innerHTML = '';
+      select.innerHTML = '<option value="">-- Chọn con em học sinh trong lớp 12A1 --</option>';
       students.forEach(st => {
         const opt = document.createElement('option');
         opt.value = st.id;
-        opt.textContent = `${st.student_code} - ${st.full_name} (Bàn ${st.seat_row}-${st.seat_col})`;
+        opt.textContent = `${st.student_code} - ${st.full_name} (Bàn ${st.seat_row}-${st.seat_col} • Bố mẹ: ${st.parent_name || 'PH'})`;
         select.appendChild(opt);
       });
       this.studentsLoaded = true;
     } catch (err) {
       console.warn('Không thể tải danh sách học sinh:', err);
-      select.innerHTML = '<option value="1">Học sinh mặc định</option>';
+      select.innerHTML = '<option value="2">HS1202 - Trần Bảo Ngọc</option>';
     }
   },
 
@@ -110,10 +136,10 @@ const AuthModal = {
 
     if (type === 'error') {
       box.className = 'p-3 rounded-xl text-xs font-medium flex items-center space-x-2 bg-rose-500/10 border border-rose-500/30 text-rose-300';
-      box.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm"></i><span>${message}</span>`;
+      box.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm flex-shrink-0"></i><span>${message}</span>`;
     } else {
       box.className = 'p-3 rounded-xl text-xs font-medium flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300';
-      box.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i><span>${message}</span>`;
+      box.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-sm flex-shrink-0"></i><span>${message}</span>`;
     }
   },
 
@@ -127,12 +153,12 @@ const AuthModal = {
 
   async handleLogin(event) {
     event.preventDefault();
-    const username = document.getElementById('login-username').value.trim();
+    const ident = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
     const submitBtn = document.getElementById('btn-login-submit');
 
-    if (!username || !password) {
-      this.showAlert('Vui lòng điền đầy đủ tên đăng nhập và mật khẩu.');
+    if (!ident || !password) {
+      this.showAlert('Vui lòng điền email/tên đăng nhập và mật khẩu.');
       return;
     }
 
@@ -141,17 +167,17 @@ const AuthModal = {
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang xác thực...';
 
     try {
-      const res = await API.login(username, password);
+      const res = await API.login(ident, password);
       showToast(res.message || 'Đăng nhập thành công!', 'success');
       this.close();
       this.renderNavUser();
 
-      // Đồng bộ vai trò hệ thống
+      // Chuyển vai trò hệ thống tương ứng
       if (res.user && res.user.role) {
         App.switchRole(res.user.role);
       }
     } catch (err) {
-      this.showAlert(err.message || 'Tên đăng nhập hoặc mật khẩu không đúng.', 'error');
+      this.showAlert(err.message || 'Email hoặc mật khẩu không chính xác.', 'error');
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalBtnHtml;
@@ -161,27 +187,25 @@ const AuthModal = {
   async handleRegister(event) {
     event.preventDefault();
     const fullName = document.getElementById('reg-fullname').value.trim();
-    const username = document.getElementById('reg-username').value.trim().toLowerCase();
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
     const password = document.getElementById('reg-password').value;
     const confirmPassword = document.getElementById('reg-confirm-password').value;
     const role = document.getElementById('reg-role').value;
-    const studentIdVal = document.getElementById('reg-student-id').value;
-    const studentId = (role === 'teacher') ? null : (parseInt(studentIdVal) || null);
     const submitBtn = document.getElementById('btn-reg-submit');
 
-    // Validation
+    // Validation cơ bản
     if (!fullName) {
       this.showAlert('Vui lòng nhập họ và tên đầy đủ.');
       return;
     }
-    if (!username || username.length < 3) {
-      this.showAlert('Tên đăng nhập phải có ít nhất 3 ký tự (chữ cái thường, số, gạch dưới).');
+
+    // Kiểm tra định dạng Email chuẩn
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      this.showAlert('Vui lòng nhập địa chỉ email hợp lệ (ví dụ: nguyentruongthinh24102013@gmail.com).');
       return;
     }
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      this.showAlert('Tên đăng nhập chỉ chứa chữ cái thường không dấu, chữ số và gạch dưới.');
-      return;
-    }
+
     if (!password || password.length < 6) {
       this.showAlert('Mật khẩu phải chứa ít nhất 6 ký tự.');
       return;
@@ -191,16 +215,37 @@ const AuthModal = {
       return;
     }
 
+    // Xử lý logic vai trò:
+    let duty = null;
+    let studentId = null;
+
+    if (role === 'monitor') {
+      // Cán bộ lớp: Lấy chức danh/nhiệm vụ cụ thể
+      const dutySelect = document.getElementById('reg-duty');
+      duty = dutySelect ? dutySelect.value : 'Cán sự lớp';
+      studentId = null; // Cán bộ lớp KHÔNG liên kết học sinh con em
+    } else if (role === 'parent_student') {
+      // Phụ huynh: BẮT BUỘC chọn học sinh liên kết 1-1
+      const studentIdVal = document.getElementById('reg-student-id').value;
+      if (!studentIdVal) {
+        this.showAlert('Tài khoản Phụ huynh bắt buộc phải chọn học sinh con em liên kết (1-1).');
+        return;
+      }
+      studentId = parseInt(studentIdVal);
+    }
+
     const originalBtnHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang lưu & Đồng bộ Supabase...';
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang đăng ký & Đồng bộ Supabase...';
 
     try {
       const payload = {
-        username,
-        password,
+        email: email,
+        username: email, // Sử dụng email làm tên định danh
+        password: password,
         full_name: fullName,
-        role,
+        role: role,
+        duty: duty,
         student_id: studentId
       };
 
@@ -209,7 +254,7 @@ const AuthModal = {
       this.close();
       this.renderNavUser();
 
-      // Đồng bộ vai trò hệ thống
+      // Tự động chuyển vai trò
       if (res.user && res.user.role) {
         App.switchRole(res.user.role);
       }
@@ -235,13 +280,10 @@ const AuthModal = {
     const user = API.currentUser;
 
     if (user && API.token) {
-      const roleBadgeColor = {
-        'teacher': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-        'monitor': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        'parent_student': 'bg-sky-500/20 text-sky-300 border-sky-500/30'
-      }[user.role] || 'bg-slate-700 text-slate-300 border-slate-600';
-
       const avatarSrc = user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+      
+      // Hiển thị chức danh cụ thể nếu có duty
+      const displayRole = user.duty ? `⭐ ${user.duty}` : (user.role_label || user.role);
 
       container.innerHTML = `
         <div class="flex items-center space-x-2 bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl p-1 pr-2.5 transition group">
@@ -249,10 +291,10 @@ const AuthModal = {
           
           <div class="hidden sm:block text-left">
             <div class="flex items-center space-x-1.5">
-              <span class="text-xs font-bold text-white max-w-[120px] truncate">${user.full_name}</span>
+              <span class="text-xs font-bold text-white max-w-[130px] truncate">${user.full_name}</span>
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" title="Supabase Cloud Synced"></span>
             </div>
-            <span class="text-[10px] text-slate-400 block -mt-0.5">${user.role_label || user.role}</span>
+            <span class="text-[10px] text-amber-300 font-medium block -mt-0.5 max-w-[140px] truncate">${displayRole}</span>
           </div>
 
           <div class="h-5 w-[1px] bg-slate-700 mx-1 hidden sm:block"></div>
@@ -288,7 +330,6 @@ const AuthModal = {
           localStorage.setItem('homeroom_user', JSON.stringify(res.user));
           this.renderNavUser();
         } else {
-          // Token expired or invalid
           API.clearSession();
           this.renderNavUser();
         }

@@ -10,6 +10,8 @@ from app.config import (
     ROLE_TEACHER,
     ROLE_MONITOR,
     ROLE_PARENT_STUDENT,
+    ROLE_STUDENT,
+    CLASS_DUTIES,
     SUPABASE_URL
 )
 from app.database import query_all, query_one, execute_commit
@@ -52,10 +54,27 @@ def verify_password(plain_password: str, stored_hash: Optional[str]) -> bool:
 
 # Session token store được chia sẻ với RBAC Guard
 
+def get_user_display_label(role: str, duty: Optional[str] = None) -> str:
+    """
+    Tạo nhãn hiển thị trực quan cho người dùng, nêu rõ chức danh nếu là cán bộ lớp
+    """
+    if duty:
+        return f"⭐ {duty}"
+    if role == ROLE_TEACHER:
+        return "👑 Giáo Viên Chủ Nhiệm"
+    elif role == ROLE_MONITOR:
+        return "⭐ Cán Sự Lớp"
+    elif role == ROLE_PARENT_STUDENT:
+        return "👨‍👩‍👧 Phụ Huynh Học Sinh"
+    elif role == ROLE_STUDENT:
+        return "🎓 Học Sinh"
+    return ROLES_MAP.get(role, role)
+
+
 def sync_user_to_supabase(user_data: Dict[str, Any]) -> bool:
     """
     Đồng bộ thông tin tài khoản người dùng trực tiếp lên Supabase Cloud qua REST API
-    Có cơ chế tự động fallback nếu Supabase chưa bổ sung cột password_hash
+    Tự động xử lý và fallback thông minh nếu schema trên Supabase thiếu cột
     """
     supabase = get_supabase_admin()
     if not supabase:
@@ -63,6 +82,8 @@ def sync_user_to_supabase(user_data: Dict[str, Any]) -> bool:
     
     payload = {
         "username": user_data["username"],
+        "email": user_data.get("email"),
+        "duty": user_data.get("duty"),
         "password_hash": user_data.get("password_hash"),
         "full_name": user_data["full_name"],
         "role": user_data["role"],
@@ -70,29 +91,24 @@ def sync_user_to_supabase(user_data: Dict[str, Any]) -> bool:
         "avatar": user_data.get("avatar")
     }
 
-    try:
-        res = supabase.table("users").upsert(payload, on_conflict="username").execute()
-        logger.info(f"Đã đồng bộ user '{user_data['username']}' lên Supabase thành công")
-        return True
-    except Exception as e:
-        err_str = str(e)
-        logger.warning(f"Lỗi khi đồng bộ user '{user_data.get('username')}' lên Supabase: {e}")
-        # Nếu cột password_hash chưa có trong bảng users trên Supabase, đồng bộ fallback các trường còn lại
-        if "password_hash" in err_str:
-            try:
-                fallback_payload = {
-                    "username": user_data["username"],
-                    "full_name": user_data["full_name"],
-                    "role": user_data["role"],
-                    "student_id": user_data.get("student_id"),
-                    "avatar": user_data.get("avatar")
-                }
-                supabase.table("users").upsert(fallback_payload, on_conflict="username").execute()
-                logger.info(f"Đã đồng bộ user '{user_data['username']}' lên Supabase (fallback)")
-                return True
-            except Exception as e2:
-                logger.warning(f"Lỗi fallback đồng bộ Supabase: {e2}")
-        return False
+    # Thử upsert tối đa 4 lần, tự động loại bỏ các cột chưa tồn tại trên Supabase nếu gặp lỗi schema
+    for _ in range(4):
+        try:
+            supabase.table("users").upsert(payload, on_conflict="username").execute()
+            logger.info(f"Đã đồng bộ user '{user_data['username']}' lên Supabase thành công")
+            return True
+        except Exception as e:
+            err_str = str(e)
+            dropped = False
+            for col in ["duty", "email", "password_hash", "student_id", "avatar"]:
+                if col in payload and f"'{col}' column" in err_str:
+                    del payload[col]
+                    dropped = True
+            if not dropped:
+                logger.warning(f"Lỗi khi đồng bộ user '{user_data.get('username')}' lên Supabase: {e}")
+                return False
+    return False
+
 
 # ==============================================================
 # Authentication Endpoints
@@ -102,19 +118,23 @@ def sync_user_to_supabase(user_data: Dict[str, Any]) -> bool:
 def register(body: UserRegisterRequest):
     """
     Đăng ký tài khoản người dùng mới:
-    - Kiểm tra username trùng lặp
-    - Băm mật khẩu bảo mật PBKDF2
-    - Lưu vào CSDL
-    - Tự động đồng bộ lên Supabase Cloud
+    - Đăng ký bằng Email (hoặc username)
+    - Phân tách rõ ràng nhiệm vụ cán bộ lớp (Lớp trưởng, Lớp phó học tập, Lớp phó nề nếp...)
+    - Chỉ tài khoản Phụ huynh mới liên kết 1-1 với học sinh
     """
-    username = body.username.strip().lower()
+    email = body.email.strip().lower()
+    username = body.username.strip().lower() if body.username else email
     
-    # 1. Kiểm tra username đã tồn tại trong DB chưa
-    existing = query_one("SELECT id, username FROM users WHERE username = ?", (username,))
+    # 1. Kiểm tra email hoặc username đã tồn tại chưa
+    existing = query_one(
+        "SELECT id, username, email FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?",
+        (username, email)
+    )
     if existing:
+        matched = "Email" if existing.get("email") == email else "Tên đăng nhập"
         raise HTTPException(
             status_code=400,
-            detail=f"Tên đăng nhập '{username}' đã được sử dụng. Vui lòng chọn tên khác."
+            detail=f"{matched} '{email if matched == 'Email' else username}' đã được đăng ký. Vui lòng đăng nhập hoặc dùng email khác."
         )
     
     # 2. Kiểm tra thêm trên Supabase nếu có kết nối
@@ -125,16 +145,29 @@ def register(body: UserRegisterRequest):
             if sb_check.data and len(sb_check.data) > 0:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Tên đăng nhập '{username}' đã tồn tại trên Supabase Cloud."
+                    detail=f"Tài khoản '{username}' đã tồn tại trên Supabase Cloud."
                 )
         except HTTPException:
             raise
         except Exception:
             pass
 
-    # 3. Validate Role
+    # 3. Validate Role & Duty
     role = body.role if body.role in ROLES_MAP else ROLE_PARENT_STUDENT
+    duty = body.duty.strip() if body.duty else None
     
+    # QUY TẮC CỐT LÕI: Chỉ phụ huynh mới liên kết 1-1 với học sinh
+    if role == ROLE_PARENT_STUDENT:
+        if not body.student_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Tài khoản Phụ huynh bắt buộc phải chọn học sinh liên kết (1-1) trong danh sách lớp 12A1."
+            )
+        student_id = body.student_id
+    else:
+        # Cán bộ lớp (monitor) và GVCN (teacher) KHÔNG liên kết học sinh con em
+        student_id = None
+
     # Avatar mặc định theo vai trò
     avatar = body.avatar
     if not avatar:
@@ -150,18 +183,20 @@ def register(body: UserRegisterRequest):
 
     # 5. Lưu vào CSDL
     new_id = execute_commit("""
-        INSERT INTO users (username, password_hash, full_name, role, student_id, avatar)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (username, hashed_password, body.full_name.strip(), role, body.student_id, avatar))
+        INSERT INTO users (username, email, duty, password_hash, full_name, role, student_id, avatar)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (username, email, duty, hashed_password, body.full_name.strip(), role, student_id, avatar))
 
     # 6. Đồng bộ trực tiếp lên Supabase Cloud
     user_payload = {
         "id": new_id,
         "username": username,
+        "email": email,
+        "duty": duty,
         "password_hash": hashed_password,
         "full_name": body.full_name.strip(),
         "role": role,
-        "student_id": body.student_id,
+        "student_id": student_id,
         "avatar": avatar
     }
     synced_supabase = sync_user_to_supabase(user_payload)
@@ -170,12 +205,13 @@ def register(body: UserRegisterRequest):
     token = secrets.token_hex(24)
     ACTIVE_SESSIONS[token] = user_payload
 
+    display_duty = f" ({duty})" if duty else ""
     record_gateway_log(
         method="POST",
         path="/api/auth/register",
         role=role,
         status="ALLOWED",
-        detail=f"Đăng ký thành công: {username} ({role}) • Supabase Sync: {'OK' if synced_supabase else 'Pending'}"
+        detail=f"Đăng ký thành công: {email} [{role}{display_duty}] • Supabase: {'OK' if synced_supabase else 'Pending'}"
     )
 
     return {
@@ -186,10 +222,12 @@ def register(body: UserRegisterRequest):
         "user": {
             "id": new_id,
             "username": username,
+            "email": email,
+            "duty": duty,
             "full_name": body.full_name.strip(),
             "role": role,
-            "role_label": ROLES_MAP.get(role, role),
-            "student_id": body.student_id,
+            "role_label": get_user_display_label(role, duty),
+            "student_id": student_id,
             "avatar": avatar
         }
     }
@@ -198,39 +236,46 @@ def register(body: UserRegisterRequest):
 @router.post("/login")
 def login(body: UserLoginRequest):
     """
-    Đăng nhập bằng username và mật khẩu:
-    - Tìm kiếm tài khoản trong CSDL và Supabase
+    Đăng nhập bằng Email hoặc Username và mật khẩu:
+    - Tìm kiếm tài khoản trong CSDL và Supabase theo email hoặc username
     - Kiểm tra mật khẩu
-    - Trả về token và thông tin vai trò RBAC
+    - Trả về token và thông tin vai trò, nhiệm vụ RBAC
     """
-    username = body.username.strip().lower()
+    ident = body.username.strip().lower()
     password = body.password
 
-    # 1. Tìm tài khoản trong database
-    user = query_one("SELECT * FROM users WHERE username = ?", (username,))
+    # 1. Tìm tài khoản trong database cục bộ theo email hoặc username
+    user = query_one(
+        "SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?",
+        (ident, ident)
+    )
 
     # 2. Nếu không thấy cục bộ, thử tìm trên Supabase Cloud
     if not user:
         supabase = get_supabase_admin()
         if supabase:
             try:
-                res = supabase.table("users").select("*").eq("username", username).execute()
+                res = supabase.table("users").select("*").eq("username", ident).execute()
+                if not (res.data and len(res.data) > 0):
+                    res = supabase.table("users").select("*").eq("email", ident).execute()
                 if res.data and len(res.data) > 0:
                     sb_user = res.data[0]
                     # Lưu lại vào DB cục bộ
                     execute_commit("""
-                        INSERT OR REPLACE INTO users (id, username, password_hash, full_name, role, student_id, avatar)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        INSERT OR REPLACE INTO users (id, username, email, duty, password_hash, full_name, role, student_id, avatar)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         sb_user.get("id"),
                         sb_user["username"],
+                        sb_user.get("email"),
+                        sb_user.get("duty"),
                         sb_user.get("password_hash"),
                         sb_user["full_name"],
                         sb_user["role"],
                         sb_user.get("student_id"),
                         sb_user.get("avatar")
                     ))
-                    user = query_one("SELECT * FROM users WHERE username = ?", (username,))
+                    user = query_one("SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?", (ident, ident))
             except Exception as e:
                 logger.warning(f"Lỗi tìm kiếm user trên Supabase: {e}")
 
@@ -240,11 +285,11 @@ def login(body: UserLoginRequest):
             path="/api/auth/login",
             role="guest",
             status="DENIED",
-            detail=f"Đăng nhập thất bại: Tài khoản '{username}' không tồn tại"
+            detail=f"Đăng nhập thất bại: Tài khoản '{ident}' không tồn tại"
         )
         raise HTTPException(
             status_code=401,
-            detail="Tên đăng nhập hoặc mật khẩu không chính xác."
+            detail="Email hoặc mật khẩu không chính xác."
         )
 
     # 3. Kiểm tra mật khẩu
@@ -255,11 +300,11 @@ def login(body: UserLoginRequest):
             path="/api/auth/login",
             role=user.get("role", "guest"),
             status="DENIED",
-            detail=f"Đăng nhập thất bại: Sai mật khẩu cho user '{username}'"
+            detail=f"Đăng nhập thất bại: Sai mật khẩu cho user '{ident}'"
         )
         raise HTTPException(
             status_code=401,
-            detail="Tên đăng nhập hoặc mật khẩu không chính xác."
+            detail="Email hoặc mật khẩu không chính xác."
         )
 
     # 4. Nếu tài khoản demo chưa có hash mật khẩu, tự động cập nhật hash mới
@@ -278,7 +323,7 @@ def login(body: UserLoginRequest):
         path="/api/auth/login",
         role=user["role"],
         status="ALLOWED",
-        detail=f"Đăng nhập thành công: {username} ({user['role']})"
+        detail=f"Đăng nhập thành công: {ident} ({user['role']})"
     )
 
     return {
@@ -288,10 +333,12 @@ def login(body: UserLoginRequest):
         "user": {
             "id": user["id"],
             "username": user["username"],
+            "email": user.get("email") or user["username"],
+            "duty": user.get("duty"),
             "full_name": user["full_name"],
             "role": user["role"],
-            "role_label": ROLES_MAP.get(user["role"], user["role"]),
-            "student_id": user.get("student_id") or (2 if user["role"] == ROLE_PARENT_STUDENT else 1),
+            "role_label": get_user_display_label(user["role"], user.get("duty")),
+            "student_id": user.get("student_id") or (2 if user["role"] == ROLE_PARENT_STUDENT else None),
             "avatar": user.get("avatar")
         }
     }
@@ -311,9 +358,11 @@ def get_me(authorization: Optional[str] = Header(None)):
                 "user": {
                     "id": u.get("id"),
                     "username": u.get("username"),
+                    "email": u.get("email") or u.get("username"),
+                    "duty": u.get("duty"),
                     "full_name": u.get("full_name"),
                     "role": u.get("role"),
-                    "role_label": ROLES_MAP.get(u.get("role"), u.get("role")),
+                    "role_label": get_user_display_label(u.get("role"), u.get("duty")),
                     "student_id": u.get("student_id"),
                     "avatar": u.get("avatar")
                 }
@@ -326,10 +375,12 @@ def get_me(authorization: Optional[str] = Header(None)):
 def get_auth_users():
     """
     Trả về danh sách tài khoản demo và tài khoản đã đăng ký (không trả về mật khẩu)
+    Kèm danh mục các nhiệm vụ cụ thể của ban cán sự lớp (CLASS_DUTIES)
     """
-    users = query_all("SELECT id, username, full_name, role, student_id, avatar, created_at FROM users ORDER BY id ASC")
+    users = query_all("SELECT id, username, email, duty, full_name, role, student_id, avatar, created_at FROM users ORDER BY id ASC")
     return {
         "roles": ROLES_MAP,
+        "class_duties": CLASS_DUTIES,
         "users": users
     }
 
@@ -356,29 +407,13 @@ def sync_all_users_to_supabase():
         if not pw_hash:
             pw_hash = hash_password("123456")
             execute_commit("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, u["id"]))
+            u["password_hash"] = pw_hash
         
-        payload = {
-            "username": u["username"],
-            "password_hash": pw_hash,
-            "full_name": u["full_name"],
-            "role": u["role"],
-            "student_id": u.get("student_id"),
-            "avatar": u.get("avatar")
-        }
-        try:
-            supabase.table("users").upsert(payload, on_conflict="username").execute()
+        ok = sync_user_to_supabase(u)
+        if ok:
             synced_count += 1
-        except Exception as e:
-            if "password_hash" in str(e):
-                try:
-                    fallback_payload = {k: v for k, v in payload.items() if k != "password_hash"}
-                    supabase.table("users").upsert(fallback_payload, on_conflict="username").execute()
-                    synced_count += 1
-                    continue
-                except Exception as e2:
-                    errors.append(f"{u['username']}: {str(e2)}")
-            else:
-                errors.append(f"{u['username']}: {str(e)}")
+        else:
+            errors.append(f"{u['username']}: Lỗi đồng bộ Supabase")
 
     return {
         "success": True,

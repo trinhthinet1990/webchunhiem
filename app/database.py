@@ -195,6 +195,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
+            email TEXT,
+            duty TEXT,
             password_hash TEXT,
             full_name TEXT NOT NULL,
             role TEXT NOT NULL,
@@ -205,6 +207,14 @@ def init_db():
         """)
         try:
             cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS duty TEXT;")
         except Exception:
             pass
 
@@ -322,6 +332,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
+            email TEXT,
+            duty TEXT,
             password_hash TEXT,
             full_name TEXT NOT NULL,
             role TEXT NOT NULL,
@@ -332,6 +344,14 @@ def init_db():
         """)
         try:
             cursor.execute("ALTER TABLE users ADD COLUMN password_hash TEXT;")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN email TEXT;")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN duty TEXT;")
         except Exception:
             pass
 

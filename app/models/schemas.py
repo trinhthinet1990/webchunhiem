@@ -62,13 +62,15 @@ class SwitchRoleRequest(BaseModel):
     student_id: Optional[int] = None
 
 class UserRegisterRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50, description="Tên đăng nhập (ít nhất 3 ký tự)")
+    email: str = Field(..., description="Email đăng nhập của người dùng")
+    username: Optional[str] = Field(default=None, description="Tên đăng nhập (nếu để trống sẽ dùng email)")
     password: str = Field(..., min_length=6, description="Mật khẩu (ít nhất 6 ký tự)")
-    full_name: str = Field(..., min_length=2, description="Họ và tên")
-    role: str = Field(default="parent_student", description="Vai trò: teacher, monitor, parent_student")
-    student_id: Optional[int] = Field(default=None, description="ID học sinh liên kết (cho cán sự / phụ huynh)")
+    full_name: str = Field(..., min_length=2, description="Họ và tên người dùng")
+    role: str = Field(default="parent_student", description="Vai trò: teacher, monitor, parent_student, student")
+    duty: Optional[str] = Field(default=None, description="Nhiệm vụ cụ thể của cán bộ lớp (Lớp trưởng, Lớp phó học tập, Lớp phó nề nếp...)")
+    student_id: Optional[int] = Field(default=None, description="ID học sinh liên kết 1-1 (CHỈ BẮT BUỘC KHI LÀ PHỤ HUYNH)")
     avatar: Optional[str] = Field(default=None, description="URL ảnh đại diện")
 
 class UserLoginRequest(BaseModel):
-    username: str = Field(..., description="Tên đăng nhập")
+    username: str = Field(..., description="Email hoặc Tên đăng nhập")
     password: str = Field(..., description="Mật khẩu")

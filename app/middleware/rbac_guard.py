@@ -42,13 +42,17 @@ def get_current_user_context(
     if token and token in ACTIVE_SESSIONS:
         session_user = ACTIVE_SESSIONS[token]
         user_role = session_user.get("role", ROLE_TEACHER)
+        duty = session_user.get("duty")
         sid = session_user.get("student_id") or (2 if user_role == ROLE_PARENT_STUDENT else 1)
+        role_label = f"⭐ {duty}" if duty else ROLES_MAP.get(user_role, "Khách")
         return {
             "role": user_role,
-            "role_label": ROLES_MAP.get(user_role, "Khách"),
+            "duty": duty,
+            "role_label": role_label,
             "student_id": sid,
             "user_id": session_user.get("id"),
             "username": session_user.get("username"),
+            "email": session_user.get("email") or session_user.get("username"),
             "full_name": session_user.get("full_name"),
             "avatar": session_user.get("avatar"),
             "is_authenticated": True

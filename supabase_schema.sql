@@ -23,6 +23,8 @@ DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
+    email TEXT,
+    duty TEXT,
     password_hash TEXT,
     full_name TEXT NOT NULL,
     role TEXT NOT NULL,
@@ -31,8 +33,10 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tự động thêm cột password_hash nếu bảng đã tồn tại từ trước
+-- Tự động bổ sung các cột nếu bảng đã tồn tại từ trước trên Supabase
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS duty TEXT;
 
 -- 2. Bảng students (Hồ sơ học sinh 360° & Tọa độ ma trận chỗ ngồi)
 CREATE TABLE students (
