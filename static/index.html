@@ -37,22 +37,37 @@
         </div>
       </div>
 
-      <!-- Center & Right: Role Switcher & RBAC Indicator -->
-      <div class="flex items-center space-x-4">
+      <!-- Center & Right: Role Switcher & RBAC Indicator & Auth Controls -->
+      <div class="flex items-center space-x-3">
         
         <!-- Live Role Badge -->
-        <div id="current-role-badge" class="hidden sm:flex items-center px-3 py-1 text-xs rounded-full border font-semibold">
+        <div id="current-role-badge" class="hidden lg:flex items-center px-3 py-1 text-xs rounded-full border font-semibold">
           <!-- Injected via app.js -->
         </div>
 
         <!-- Role Switcher Dropdown (Simulates RBAC Auth Guard in real-time) -->
-        <div class="flex items-center space-x-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700">
+        <div class="hidden sm:flex items-center space-x-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
           <span class="text-xs text-slate-400 pl-2 hidden md:inline"><i class="fa-solid fa-user-shield text-indigo-400 mr-1"></i>Vai trò:</span>
-          <select id="global-role-selector" class="bg-slate-900 text-xs text-white rounded-lg px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:border-indigo-500 font-medium">
-            <option value="teacher">👑 GVCN (Cô Mai Anh - Toàn quyền)</option>
-            <option value="monitor">⭐ Cán sự lớp (Lớp trưởng Đức Huy)</option>
-            <option value="parent_student">👨‍👩‍👧 Cổng Phụ huynh (Bác Nam - Em Bảo Ngọc)</option>
+          <select id="global-role-selector" class="bg-slate-900 text-xs text-white rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-indigo-500 font-medium">
+            <option value="teacher">👑 GVCN (Cô Mai Anh)</option>
+            <option value="monitor">⭐ Cán sự (Đức Huy)</option>
+            <option value="parent_student">👨‍👩‍👧 Phụ huynh (Bảo Ngọc)</option>
           </select>
+        </div>
+
+        <!-- Supabase Cloud Sync Quick Action -->
+        <button onclick="App.syncToSupabase()" title="Đồng bộ toàn bộ tài khoản lên Supabase Cloud" class="hidden md:flex items-center space-x-1.5 px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30 text-xs font-semibold transition">
+          <i class="fa-solid fa-cloud text-emerald-400 animate-pulse"></i>
+          <span>Supabase Cloud</span>
+        </button>
+
+        <!-- Auth Button / User Profile -->
+        <div id="nav-auth-container" class="flex items-center">
+          <!-- Rendered dynamically by auth.js: Either [Đăng nhập / Đăng ký] or [User Avatar + Logout] -->
+          <button onclick="AuthModal.open('login')" class="flex items-center space-x-2 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 border border-indigo-400/30 transition">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Đăng Nhập</span>
+          </button>
         </div>
 
       </div>
@@ -221,11 +236,195 @@
     </div>
   </div>
 
+  <!-- ==================== AUTH MODAL (LOGIN & REGISTER) ==================== -->
+  <div id="auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative text-white animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Close button -->
+      <button onclick="AuthModal.close()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-xl w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="px-7 pt-7 pb-4 border-b border-slate-800">
+        <div class="flex items-center space-x-2.5 mb-2">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-600/40">
+            <i class="fa-solid fa-shield-halved text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-base tracking-tight text-white">HOMEROOM <span class="text-indigo-400">360°</span></h3>
+            <p class="text-[11px] text-slate-400">Hệ thống Xác thực RBAC & Supabase Cloud</p>
+          </div>
+        </div>
+
+        <!-- Tab Switcher (Đăng Nhập / Đăng Ký) -->
+        <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-800/80 rounded-xl mt-4 border border-slate-700/60">
+          <button id="auth-tab-btn-login" onclick="AuthModal.switchTab('login')" class="py-2 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white shadow">
+            <i class="fa-solid fa-right-to-bracket text-xs"></i>
+            <span>Đăng Nhập</span>
+          </button>
+          <button id="auth-tab-btn-register" onclick="AuthModal.switchTab('register')" class="py-2 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-user-plus text-xs"></i>
+            <span>Đăng Ký Mới</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-7 max-h-[75vh] overflow-y-auto space-y-4">
+        
+        <!-- Error & Success Alert Box -->
+        <div id="auth-alert" class="hidden p-3 rounded-xl text-xs font-semibold flex items-center space-x-2"></div>
+
+        <!-- ================= FORM ĐĂNG NHẬP ================= -->
+        <form id="form-login" onsubmit="AuthModal.handleLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+              <i class="fa-solid fa-user text-indigo-400 mr-1"></i>Tên đăng nhập (Username)
+            </label>
+            <div class="relative">
+              <input type="text" id="login-username" required placeholder="Ví dụ: gvcn_maianh hoặc lt_duchuy" autocomplete="username"
+                     class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+              <i class="fa-solid fa-key text-indigo-400 mr-1"></i>Mật khẩu
+            </label>
+            <div class="relative">
+              <input type="password" id="login-password" required placeholder="Nhập mật khẩu..." autocomplete="current-password"
+                     class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+              <button type="button" onclick="AuthModal.togglePassword('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                <i class="fa-solid fa-eye text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="btn-login-submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 transition">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            <span>Đăng Nhập Hệ Thống</span>
+          </button>
+
+          <!-- Demo Quick Fill -->
+          <div class="pt-2 border-t border-slate-800/80">
+            <p class="text-[11px] text-slate-400 mb-2 font-medium flex items-center justify-between">
+              <span>⚡ Đăng nhập nhanh tài khoản mẫu:</span>
+              <span class="text-[10px] text-indigo-400">Pass: 123456</span>
+            </p>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button type="button" onclick="AuthModal.quickFill('gvcn_maianh', '123456')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left transition group">
+                <div class="text-[11px] font-bold text-white group-hover:text-indigo-300">👑 GVCN</div>
+                <div class="text-[10px] text-slate-400 truncate">gvcn_maianh</div>
+              </button>
+              <button type="button" onclick="AuthModal.quickFill('lt_duchuy', '123456')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left transition group">
+                <div class="text-[11px] font-bold text-white group-hover:text-indigo-300">⭐ Cán sự</div>
+                <div class="text-[10px] text-slate-400 truncate">lt_duchuy</div>
+              </button>
+              <button type="button" onclick="AuthModal.quickFill('ph_baongoc', '123456')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left transition group">
+                <div class="text-[11px] font-bold text-white group-hover:text-indigo-300">👨‍👩‍👧 Phụ huynh</div>
+                <div class="text-[10px] text-slate-400 truncate">ph_baongoc</div>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- ================= FORM ĐĂNG KÝ ================= -->
+        <form id="form-register" onsubmit="AuthModal.handleRegister(event)" class="space-y-3.5 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">
+              <i class="fa-solid fa-id-card text-indigo-400 mr-1"></i>Họ và tên đầy đủ
+            </label>
+            <input type="text" id="reg-fullname" required placeholder="Ví dụ: Thầy Trần Quang Vinh, Bác Đặng Thị Hoa..."
+                   class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">
+              <i class="fa-solid fa-at text-indigo-400 mr-1"></i>Tên đăng nhập (Username)
+            </label>
+            <input type="text" id="reg-username" required placeholder="Viết liền không dấu, từ 3 ký tự (vd: quangvinh)" autocomplete="username"
+                   class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                <i class="fa-solid fa-lock text-indigo-400 mr-1"></i>Mật khẩu
+              </label>
+              <div class="relative">
+                <input type="password" id="reg-password" required minlength="6" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password"
+                       class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 pr-8 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                <button type="button" onclick="AuthModal.togglePassword('reg-password', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  <i class="fa-solid fa-eye text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                <i class="fa-solid fa-circle-check text-indigo-400 mr-1"></i>Xác nhận MK
+              </label>
+              <div class="relative">
+                <input type="password" id="reg-confirm-password" required minlength="6" placeholder="Nhập lại mật khẩu" autocomplete="new-password"
+                       class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 pr-8 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                <button type="button" onclick="AuthModal.togglePassword('reg-confirm-password', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                  <i class="fa-solid fa-eye text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">
+              <i class="fa-solid fa-user-shield text-indigo-400 mr-1"></i>Vai trò trong hệ thống (RBAC)
+            </label>
+            <select id="reg-role" onchange="AuthModal.onRoleChange(this.value)"
+                    class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-medium">
+              <option value="parent_student">👨‍👩‍👧 Phụ huynh / Học sinh (Tra cứu học lực, nề nếp, gửi đơn nghỉ)</option>
+              <option value="monitor">⭐ Cán sự lớp (Chấm điểm thi đua, hỗ trợ điểm danh)</option>
+              <option value="teacher">👑 Giáo viên chủ nhiệm (Toàn quyền quản trị & Xếp chỗ)</option>
+            </select>
+          </div>
+
+          <!-- Chọn học sinh liên kết (nếu là phụ huynh hoặc cán sự) -->
+          <div id="reg-student-picker">
+            <label class="block text-xs font-semibold text-slate-300 mb-1">
+              <i class="fa-solid fa-graduation-cap text-indigo-400 mr-1"></i>Học sinh liên kết (Lớp 12A1)
+            </label>
+            <select id="reg-student-id" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-medium">
+              <!-- Dynamically populated from API.getStudents() -->
+            </select>
+          </div>
+
+          <!-- Supabase Synchronization Notice -->
+          <div class="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-start space-x-2.5">
+            <i class="fa-solid fa-cloud-arrow-up text-emerald-400 text-sm mt-0.5"></i>
+            <div class="text-[11px] leading-relaxed text-emerald-300">
+              <strong class="font-bold">Đồng bộ tự động Supabase Cloud:</strong>
+              Tài khoản sẽ được mã hóa chuẩn PBKDF2 và ghi tức thì vào bảng <code class="text-white bg-emerald-950/60 px-1 py-0.5 rounded">users</code> trên Supabase.
+            </div>
+          </div>
+
+          <!-- Register Submit Button -->
+          <button type="submit" id="btn-reg-submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-2 transition">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Đăng Ký & Đồng Bộ Supabase Cloud</span>
+          </button>
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts -->
   <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
   <script src="/static/js/architecture.js"></script>
   <script src="/static/js/teacher_dashboard.js"></script>
   <script src="/static/js/monitor_portal.js"></script>

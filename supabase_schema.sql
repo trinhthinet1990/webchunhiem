@@ -23,12 +23,16 @@ DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
+    password_hash TEXT,
     full_name TEXT NOT NULL,
     role TEXT NOT NULL,
     student_id INTEGER,
     avatar TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Tự động thêm cột password_hash nếu bảng đã tồn tại từ trước
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 -- 2. Bảng students (Hồ sơ học sinh 360° & Tọa độ ma trận chỗ ngồi)
 CREATE TABLE students (
@@ -152,12 +156,12 @@ ALTER TABLE absence_requests DISABLE ROW LEVEL SECURITY;
 -- 3. CHÈN DỮ LIỆU BAN ĐẦU (SEED DATA)
 -- ==============================================================================
 
--- Dữ liệu bảng users (4 bản ghi)
-INSERT INTO users (id, username, full_name, role, student_id, avatar, created_at) VALUES
-(1, 'gvcn_maianh', 'Cô Hoàng Mai Anh', 'teacher', NULL, 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29'),
-(2, 'lt_duchuy', 'Nguyễn Đức Huy (Lớp Trưởng)', 'monitor', 1, 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29'),
-(3, 'ph_baongoc', 'Trần Văn Nam (PH em Bảo Ngọc)', 'parent_student', 2, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29'),
-(4, 'ph_minhtri', 'Lê Thị Thảo (PH em Minh Trí)', 'parent_student', 6, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29');
+-- Dữ liệu bảng users (4 bản ghi - mật khẩu mặc định: 123456)
+INSERT INTO users (id, username, password_hash, full_name, role, student_id, avatar, created_at) VALUES
+(1, 'gvcn_maianh', '515e1a2e18299c8fdb10ab4de52bd4a5:565791ad8880f57b0302ad89a6315cd8b4d4911b61b6856d752d89d66caa95e5', 'Cô Hoàng Mai Anh', 'teacher', NULL, 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29'),
+(2, 'lt_duchuy', '515e1a2e18299c8fdb10ab4de52bd4a5:565791ad8880f57b0302ad89a6315cd8b4d4911b61b6856d752d89d66caa95e5', 'Nguyễn Đức Huy (Lớp Trưởng)', 'monitor', 1, 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29'),
+(3, 'ph_baongoc', '515e1a2e18299c8fdb10ab4de52bd4a5:565791ad8880f57b0302ad89a6315cd8b4d4911b61b6856d752d89d66caa95e5', 'Trần Văn Nam (PH em Bảo Ngọc)', 'parent_student', 2, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29'),
+(4, 'ph_minhtri', '515e1a2e18299c8fdb10ab4de52bd4a5:565791ad8880f57b0302ad89a6315cd8b4d4911b61b6856d752d89d66caa95e5', 'Lê Thị Thảo (PH em Minh Trí)', 'parent_student', 6, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', '2026-10-05 09:45:29');
 
 -- Dữ liệu bảng students (30 bản ghi)
 INSERT INTO students (id, student_code, full_name, gender, dob, height_cm, has_glasses, seat_row, seat_col, conduct, academic_rank, gpa, gamified_points, badge, parent_name, parent_phone, parent_email, avatar, health_notes, teacher_notes, created_at) VALUES

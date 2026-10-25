@@ -9,6 +9,9 @@ STUDENT_ID_HEADER = APIKeyHeader(name="X-Student-Id", auto_error=False)
 # Audit log for API Gateway & RBAC Guard to display in the Architecture Explorer
 GATEWAY_AUDIT_LOGS: List[Dict[str, Any]] = []
 
+# Active session store for token authentication
+ACTIVE_SESSIONS: Dict[str, Dict[str, Any]] = {}
+
 def record_gateway_log(method: str, path: str, role: str, status: str, detail: str = ""):
     import datetime
     log_entry = {
@@ -24,20 +27,43 @@ def record_gateway_log(method: str, path: str, role: str, status: str, detail: s
         GATEWAY_AUDIT_LOGS.pop()
 
 def get_current_user_context(
+    request: Request,
     role: Optional[str] = Depends(API_KEY_HEADER),
     student_id: Optional[str] = Depends(STUDENT_ID_HEADER)
 ) -> Dict[str, Any]:
-    # Default to teacher if not specified (for ease of initial exploration)
+    # 1. Kiểm tra session token qua Authorization header hoặc X-Session-Token
+    auth_header = request.headers.get("Authorization", "")
+    token = ""
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+    elif "X-Session-Token" in request.headers:
+        token = request.headers.get("X-Session-Token", "").strip()
+
+    if token and token in ACTIVE_SESSIONS:
+        session_user = ACTIVE_SESSIONS[token]
+        user_role = session_user.get("role", ROLE_TEACHER)
+        sid = session_user.get("student_id") or (2 if user_role == ROLE_PARENT_STUDENT else 1)
+        return {
+            "role": user_role,
+            "role_label": ROLES_MAP.get(user_role, "Khách"),
+            "student_id": sid,
+            "user_id": session_user.get("id"),
+            "username": session_user.get("username"),
+            "full_name": session_user.get("full_name"),
+            "avatar": session_user.get("avatar"),
+            "is_authenticated": True
+        }
+
+    # 2. Dự phòng qua Header X-User-Role (hỗ trợ chuyển đổi vai trò trực tiếp trên giao diện)
     user_role = role or ROLE_TEACHER
     sid = int(student_id) if student_id and student_id.isdigit() else (2 if user_role == ROLE_PARENT_STUDENT else 1)
-
     role_label = ROLES_MAP.get(user_role, "Khách")
 
     return {
         "role": user_role,
         "role_label": role_label,
         "student_id": sid,
-        "is_authenticated": True
+        "is_authenticated": False
     }
 
 def require_roles(allowed_roles: List[str]):

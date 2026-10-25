@@ -3,6 +3,8 @@
  * Encapsulates RBAC headers and controller endpoints
  */
 const API = {
+  token: localStorage.getItem('homeroom_token') || null,
+  currentUser: JSON.parse(localStorage.getItem('homeroom_user') || 'null'),
   currentRole: localStorage.getItem('homeroom_role') || 'teacher',
   currentStudentId: parseInt(localStorage.getItem('homeroom_student_id') || '2'),
 
@@ -15,6 +17,23 @@ const API = {
     }
   },
 
+  setSession(token, user) {
+    this.token = token;
+    this.currentUser = user;
+    localStorage.setItem('homeroom_token', token);
+    localStorage.setItem('homeroom_user', JSON.stringify(user));
+    if (user.role) {
+      this.setRole(user.role, user.student_id);
+    }
+  },
+
+  clearSession() {
+    this.token = null;
+    this.currentUser = null;
+    localStorage.removeItem('homeroom_token');
+    localStorage.removeItem('homeroom_user');
+  },
+
   async request(url, options = {}) {
     const headers = {
       'Content-Type': 'application/json',
@@ -23,17 +42,23 @@ const API = {
       ...(options.headers || {})
     };
 
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+      headers['X-Session-Token'] = this.token;
+    }
+
     try {
       const response = await fetch(url, { ...options, headers });
       const data = await response.json();
 
       if (!response.ok) {
+        const errorMsg = data.detail?.message || data.detail || 'Đã có lỗi xảy ra';
         if (response.status === 403) {
-          showToast(data.detail?.message || 'Quyền truy cập bị từ chối bởi RBAC Auth Guard', 'danger');
-        } else {
-          showToast(data.detail || 'Đã có lỗi xảy ra', 'danger');
+          showToast(errorMsg, 'danger');
+        } else if (response.status !== 401) {
+          showToast(errorMsg, 'danger');
         }
-        throw new Error(data.detail || 'API Error');
+        throw new Error(errorMsg);
       }
 
       return data;
@@ -41,6 +66,43 @@ const API = {
       console.error('API Request failed:', err);
       throw err;
     }
+  },
+
+  // Auth & Supabase APIs
+  async login(username, password) {
+    const res = await this.request('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+    if (res.token && res.user) {
+      this.setSession(res.token, res.user);
+    }
+    return res;
+  },
+
+  async register(payload) {
+    const res = await this.request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res.token && res.user) {
+      this.setSession(res.token, res.user);
+    }
+    return res;
+  },
+
+  async getMe() {
+    return this.request('/api/auth/me');
+  },
+
+  async getAuthUsers() {
+    return this.request('/api/auth/users');
+  },
+
+  async syncAllToSupabase() {
+    return this.request('/api/auth/sync-all-to-supabase', {
+      method: 'POST'
+    });
   },
 
   // Architecture status

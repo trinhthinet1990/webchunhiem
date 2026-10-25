@@ -14,6 +14,7 @@ from app.controllers.academic_controller import router as academic_router
 from app.controllers.ai_report_controller import router as ai_report_router
 from app.controllers.communication_worker import router as communication_router, absence_router
 from app.controllers.architecture_controller import router as architecture_router
+from app.controllers.auth_controller import router as auth_router
 
 app = FastAPI(
     title=APP_TITLE,
@@ -45,18 +46,7 @@ app.include_router(academic_router)
 app.include_router(ai_report_router)
 app.include_router(communication_router)
 app.include_router(absence_router)
-
-# Authentication & Role Switcher Helpers
-@app.get("/api/auth/users")
-def get_auth_users():
-    """
-    Trả về danh sách tài khoản demo cho 3 vai trò trong sơ đồ
-    """
-    users = query_all("SELECT * FROM users")
-    return {
-        "roles": ROLES_MAP,
-        "users": users
-    }
+app.include_router(auth_router)
 
 # Mount static files
 if not STATIC_DIR.exists():

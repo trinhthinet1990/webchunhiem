@@ -195,6 +195,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
+            password_hash TEXT,
             full_name TEXT NOT NULL,
             role TEXT NOT NULL,
             student_id INTEGER,
@@ -202,6 +203,10 @@ def init_db():
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
         """)
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;")
+        except Exception:
+            pass
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS students (
@@ -317,6 +322,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
+            password_hash TEXT,
             full_name TEXT NOT NULL,
             role TEXT NOT NULL,
             student_id INTEGER,
@@ -324,6 +330,10 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """)
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN password_hash TEXT;")
+        except Exception:
+            pass
 
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS students (

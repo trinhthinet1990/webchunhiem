@@ -7,6 +7,9 @@ const App = {
   init() {
     this.setupEventListeners();
     this.updateRoleUI();
+    if (typeof AuthModal !== 'undefined') {
+      AuthModal.initAuth();
+    }
     this.switchTab('architecture');
   },
 
@@ -24,6 +27,9 @@ const App = {
   switchRole(newRole) {
     API.setRole(newRole);
     this.updateRoleUI();
+    if (typeof AuthModal !== 'undefined') {
+      AuthModal.renderNavUser();
+    }
 
     showToast(`Đã chuyển vai trò RBAC: ${API.currentRole.toUpperCase()}`, 'info');
 
@@ -85,6 +91,16 @@ const App = {
 
     // Refresh data for the specific tab
     this.refreshCurrentTab();
+  },
+
+  async syncToSupabase() {
+    showToast('Đang kết nối & đồng bộ dữ liệu tài khoản lên Supabase Cloud...', 'info');
+    try {
+      const res = await API.syncAllToSupabase();
+      showToast(res.message || 'Đồng bộ Supabase Cloud hoàn tất!', 'success');
+    } catch (err) {
+      showToast('Đồng bộ thất bại: ' + err.message, 'danger');
+    }
   },
 
   refreshCurrentTab() {
