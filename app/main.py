@@ -15,6 +15,7 @@ from app.controllers.ai_report_controller import router as ai_report_router
 from app.controllers.communication_worker import router as communication_router, absence_router
 from app.controllers.architecture_controller import router as architecture_router
 from app.controllers.auth_controller import router as auth_router
+from app.controllers.admin_controller import router as admin_router
 
 app = FastAPI(
     title=APP_TITLE,
@@ -57,6 +58,7 @@ app.include_router(ai_report_router)
 app.include_router(communication_router)
 app.include_router(absence_router)
 app.include_router(auth_router)
+app.include_router(admin_router)
 
 # Mount static files
 if not STATIC_DIR.exists():

@@ -34,12 +34,14 @@ const App = {
     showToast(`Đã chuyển vai trò RBAC: ${API.currentRole.toUpperCase()}`, 'info');
 
     // Auto navigate to role specific portal if relevant
-    if (newRole === 'monitor') {
+    if (newRole === 'admin') {
+      this.switchTab('admin_portal');
+    } else if (newRole === 'monitor') {
       this.switchTab('monitor_portal');
     } else if (newRole === 'parent_student') {
       this.switchTab('parent_portal');
     } else {
-      if (this.currentTab === 'monitor_portal' || this.currentTab === 'parent_portal') {
+      if (this.currentTab === 'monitor_portal' || this.currentTab === 'parent_portal' || this.currentTab === 'admin_portal') {
         this.switchTab('seatmap');
       } else {
         this.refreshCurrentTab();
@@ -62,12 +64,14 @@ const App = {
           badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
         } else if (API.currentUser.role_label) {
           roleText = API.currentUser.role_label;
-          if (API.currentUser.role === 'teacher') badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+          if (API.currentUser.role === 'admin') badgeClass = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+          else if (API.currentUser.role === 'teacher') badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
           else if (API.currentUser.role === 'monitor') badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
           else badgeClass = 'bg-sky-500/20 text-sky-300 border-sky-500/40';
         }
       } else {
         const config = {
+          'admin': { text: '🛡️ Quản Trị Viên (Admin 360°)', class: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
           'teacher': { text: '👑 GVCN (Toàn quyền)', class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
           'monitor': { text: '⭐ Cán sự lớp (Hỗ trợ)', class: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
           'parent_student': { text: '👨‍👩‍👧 Cổng Phụ Huynh', class: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
@@ -149,6 +153,11 @@ const App = {
         break;
       case 'parent_portal':
         ParentPortal.render();
+        break;
+      case 'admin_portal':
+        if (typeof AdminPortal !== 'undefined') {
+          AdminPortal.render();
+        }
         break;
     }
   }

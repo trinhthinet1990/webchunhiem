@@ -272,5 +272,165 @@ const API = {
         teacher_reply: teacherReply
       })
     });
+  },
+
+  // ==============================================================
+  // Admin Portal & Comprehensive System Management APIs
+  // ==============================================================
+  async getAdminStats() {
+    return this.request('/api/admin/stats');
+  },
+
+  async getAdminUsers(search = '', role = '') {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (role) params.append('role', role);
+    return this.request(`/api/admin/users?${params.toString()}`);
+  },
+
+  async createAdminUser(payload) {
+    return this.request('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async updateAdminUser(userId, payload) {
+    return this.request(`/api/admin/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async resetAdminUserPassword(userId, newPassword) {
+    return this.request(`/api/admin/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPassword })
+    });
+  },
+
+  async deleteAdminUser(userId) {
+    return this.request(`/api/admin/users/${userId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async getAdminStudents(search = '', rank = '', conduct = '') {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (rank) params.append('rank', rank);
+    if (conduct) params.append('conduct', conduct);
+    return this.request(`/api/admin/students?${params.toString()}`);
+  },
+
+  async createAdminStudent(payload) {
+    return this.request('/api/admin/students', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async updateAdminStudent(studentId, payload) {
+    return this.request(`/api/admin/students/${studentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async deleteAdminStudent(studentId) {
+    return this.request(`/api/admin/students/${studentId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async getAdminAttendance(date = '', studentId = null) {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (studentId) params.append('student_id', studentId);
+    return this.request(`/api/admin/attendance?${params.toString()}`);
+  },
+
+  async updateAdminAttendance(logId, status, note = '') {
+    return this.request(`/api/admin/attendance/${logId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, note })
+    });
+  },
+
+  async deleteAdminAttendance(logId) {
+    return this.request(`/api/admin/attendance/${logId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async getAdminGamification(studentId = null) {
+    const params = new URLSearchParams();
+    if (studentId) params.append('student_id', studentId);
+    return this.request(`/api/admin/gamification/logs?${params.toString()}`);
+  },
+
+  async deleteAdminGamification(logId) {
+    return this.request(`/api/admin/gamification/logs/${logId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async getAdminGrades(studentId = null, subject = '') {
+    const params = new URLSearchParams();
+    if (studentId) params.append('student_id', studentId);
+    if (subject) params.append('subject', subject);
+    return this.request(`/api/admin/grades?${params.toString()}`);
+  },
+
+  async updateAdminGrade(gradeId, payload) {
+    return this.request(`/api/admin/grades/${gradeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async getAdminAIReports(studentId = null) {
+    const params = new URLSearchParams();
+    if (studentId) params.append('student_id', studentId);
+    return this.request(`/api/admin/ai-reports?${params.toString()}`);
+  },
+
+  async updateAdminAIReport(reportId, payload) {
+    return this.request(`/api/admin/ai-reports/${reportId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async deleteAdminAIReport(reportId) {
+    return this.request(`/api/admin/ai-reports/${reportId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async getAdminAbsences(status = '') {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    return this.request(`/api/admin/absence-requests?${params.toString()}`);
+  },
+
+  async reviewAdminAbsence(requestId, status, teacherReply = '') {
+    return this.request(`/api/admin/absence-requests/${requestId}?status=${status}&teacher_reply=${encodeURIComponent(teacherReply)}`, {
+      method: 'PUT'
+    });
+  },
+
+  async getAdminAuditLogs() {
+    return this.request('/api/admin/maintenance/audit-logs');
+  },
+
+  async syncAllTablesToSupabase() {
+    return this.request('/api/admin/maintenance/sync-all-to-supabase', {
+      method: 'POST'
+    });
+  },
+
+  async exportDatabaseBackup() {
+    return this.request('/api/admin/maintenance/export-backup');
   }
 };

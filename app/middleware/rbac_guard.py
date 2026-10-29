@@ -1,7 +1,7 @@
 from fastapi import Request, HTTPException, Security, Depends
 from fastapi.security import APIKeyHeader
 from typing import List, Optional, Dict, Any
-from app.config import ROLE_TEACHER, ROLE_MONITOR, ROLE_PARENT_STUDENT, ROLES_MAP
+from app.config import ROLE_ADMIN, ROLE_TEACHER, ROLE_MONITOR, ROLE_PARENT_STUDENT, ROLES_MAP
 
 API_KEY_HEADER = APIKeyHeader(name="X-User-Role", auto_error=False)
 STUDENT_ID_HEADER = APIKeyHeader(name="X-Student-Id", auto_error=False)
@@ -79,7 +79,8 @@ def require_roles(allowed_roles: List[str]):
         method = request.method
         path = request.url.path
 
-        if user_role not in allowed_roles:
+        # Admin luôn có toàn quyền truy cập tất cả tài nguyên hệ thống
+        if user_role != ROLE_ADMIN and user_role not in allowed_roles:
             record_gateway_log(
                 method=method,
                 path=path,

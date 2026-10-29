@@ -74,3 +74,87 @@ class UserRegisterRequest(BaseModel):
 class UserLoginRequest(BaseModel):
     username: str = Field(..., description="Email hoặc Tên đăng nhập")
     password: str = Field(..., description="Mật khẩu")
+
+# ==============================================================
+# Admin Portal Management Schemas
+# ==============================================================
+
+class AdminUserCreateRequest(BaseModel):
+    username: str = Field(..., min_length=3)
+    email: Optional[str] = None
+    password: str = Field(..., min_length=6)
+    full_name: str = Field(..., min_length=2)
+    role: str = "teacher"
+    duty: Optional[str] = None
+    student_id: Optional[int] = None
+    avatar: Optional[str] = None
+
+class AdminUserUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    duty: Optional[str] = None
+    student_id: Optional[int] = None
+    avatar: Optional[str] = None
+
+class AdminPasswordResetRequest(BaseModel):
+    new_password: str = Field(..., min_length=6)
+
+class AdminStudentCreateRequest(BaseModel):
+    student_code: str
+    full_name: str
+    gender: str = "Nam"
+    dob: Optional[str] = "2008-01-01"
+    height_cm: Optional[int] = 165
+    has_glasses: Optional[int] = 0
+    seat_row: Optional[int] = 1
+    seat_col: Optional[int] = 1
+    conduct: Optional[str] = "Tốt"
+    academic_rank: Optional[str] = "Giỏi"
+    gpa: Optional[float] = 8.0
+    gamified_points: Optional[int] = 100
+    badge: Optional[str] = "Học Sinh Tiêu Biểu"
+    parent_name: Optional[str] = ""
+    parent_phone: Optional[str] = ""
+    parent_email: Optional[str] = ""
+    avatar: Optional[str] = ""
+    health_notes: Optional[str] = ""
+    teacher_notes: Optional[str] = ""
+
+class AdminStudentUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    gender: Optional[str] = None
+    dob: Optional[str] = None
+    height_cm: Optional[int] = None
+    has_glasses: Optional[int] = None
+    seat_row: Optional[int] = None
+    seat_col: Optional[int] = None
+    conduct: Optional[str] = None
+    academic_rank: Optional[str] = None
+    gpa: Optional[float] = None
+    gamified_points: Optional[int] = None
+    badge: Optional[str] = None
+    parent_name: Optional[str] = None
+    parent_phone: Optional[str] = None
+    parent_email: Optional[str] = None
+    avatar: Optional[str] = None
+    health_notes: Optional[str] = None
+    teacher_notes: Optional[str] = None
+
+class AdminAttendanceLogUpdateRequest(BaseModel):
+    status: str
+    note: Optional[str] = ""
+
+class AdminGradeUpdateRequest(BaseModel):
+    tx1: Optional[float] = None
+    tx2: Optional[float] = None
+    gk: Optional[float] = None
+    ck: Optional[float] = None
+
+class AdminAIReportUpdateRequest(BaseModel):
+    tone: Optional[str] = None
+    generated_text: Optional[str] = None
+    strengths: Optional[str] = None
+    areas_for_improvement: Optional[str] = None
+    action_plan: Optional[str] = None
+    approved_by_teacher: Optional[int] = None

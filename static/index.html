@@ -49,6 +49,7 @@
         <div class="hidden sm:flex items-center space-x-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
           <span class="text-xs text-slate-400 pl-2 hidden md:inline"><i class="fa-solid fa-user-shield text-indigo-400 mr-1"></i>Vai trò:</span>
           <select id="global-role-selector" class="bg-slate-900 text-xs text-white rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-indigo-500 font-medium">
+            <option value="admin">🛡️ Quản Trị Viên (Admin)</option>
             <option value="teacher">👑 GVCN (Cô Mai Anh)</option>
             <option value="monitor">⭐ Cán sự (Đức Huy)</option>
             <option value="parent_student">👨‍👩‍👧 Phụ huynh (Bảo Ngọc)</option>
@@ -122,6 +123,13 @@
         <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition text-sky-400 border border-sky-500/20" data-tab="parent_portal" onclick="App.switchTab('parent_portal')">
           <i class="fa-solid fa-house-user"></i>
           <span>Cổng Phụ Huynh</span>
+        </button>
+
+        <div class="h-5 w-[1px] bg-slate-700 my-auto mx-1"></div>
+
+        <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition text-rose-400 border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 shadow-md font-bold" data-tab="admin_portal" onclick="App.switchTab('admin_portal')">
+          <i class="fa-solid fa-shield-halved text-rose-400"></i>
+          <span>Khu Vực Quản Trị (Admin 360°)</span>
         </button>
       </nav>
     </div>
@@ -222,6 +230,13 @@
       </div>
     </div>
 
+    <!-- TAB 10: ADMIN 360° COMPREHENSIVE CONTROL CENTER -->
+    <div id="tab-pane-admin_portal" class="tab-view-pane hidden space-y-6">
+      <div id="admin-portal-container">
+        <!-- Injected via admin_portal.js -->
+      </div>
+    </div>
+
   </main>
 
   <!-- ==================== STUDENT 360 MODAL ==================== -->
@@ -313,7 +328,11 @@
               <span>⚡ Đăng nhập nhanh tài khoản mẫu:</span>
               <span class="text-[10px] text-indigo-400">Pass: 123456</span>
             </p>
-            <div class="grid grid-cols-3 gap-1.5">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              <button type="button" onclick="AuthModal.quickFill('admin', '123456')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-rose-500/40 text-left transition group">
+                <div class="text-[11px] font-bold text-rose-400 group-hover:text-rose-300">🛡️ Admin</div>
+                <div class="text-[10px] text-slate-400 truncate">admin</div>
+              </button>
               <button type="button" onclick="AuthModal.quickFill('gvcn_maianh', '123456')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left transition group">
                 <div class="text-[11px] font-bold text-white group-hover:text-indigo-300">👑 GVCN</div>
                 <div class="text-[10px] text-slate-400 truncate">gvcn_maianh</div>
@@ -446,12 +465,13 @@
   <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
   <!-- Scripts with cache buster query string -->
-  <script src="/static/js/api.js?v=2.5.2"></script>
-  <script src="/static/js/auth.js?v=2.5.2"></script>
-  <script src="/static/js/architecture.js?v=2.5.2"></script>
-  <script src="/static/js/teacher_dashboard.js?v=2.5.2"></script>
-  <script src="/static/js/monitor_portal.js?v=2.5.2"></script>
-  <script src="/static/js/parent_portal.js?v=2.5.2"></script>
-  <script src="/static/js/app.js?v=2.5.2"></script>
+  <script src="/static/js/api.js?v=2.5.3"></script>
+  <script src="/static/js/auth.js?v=2.5.3"></script>
+  <script src="/static/js/architecture.js?v=2.5.3"></script>
+  <script src="/static/js/teacher_dashboard.js?v=2.5.3"></script>
+  <script src="/static/js/monitor_portal.js?v=2.5.3"></script>
+  <script src="/static/js/parent_portal.js?v=2.5.3"></script>
+  <script src="/static/js/admin_portal.js?v=2.5.3"></script>
+  <script src="/static/js/app.js?v=2.5.3"></script>
 </body>
 </html>

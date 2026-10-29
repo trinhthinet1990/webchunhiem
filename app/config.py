@@ -40,13 +40,15 @@ USE_POSTGRES = bool(DATABASE_URL or SUPABASE_DB_HOST)
 # ==============================================================
 # RBAC Roles & Class Officer Duties
 # ==============================================================
+ROLE_ADMIN = "admin"
 ROLE_TEACHER = "teacher"
 ROLE_MONITOR = "monitor"
 ROLE_PARENT_STUDENT = "parent_student"
 ROLE_STUDENT = "student"
 
 ROLES_MAP = {
-    ROLE_TEACHER: "Giáo Viên Chủ Nhiệm (Toàn quyền quản lý)",
+    ROLE_ADMIN: "Quản Trị Viên Hệ Thống (Toàn quyền quản trị)",
+    ROLE_TEACHER: "Giáo Viên Chủ Nhiệm (Toàn quyền quản lý lớp)",
     ROLE_MONITOR: "Ban Cán Sự Lớp (Quản lý nề nếp & thi đua)",
     ROLE_PARENT_STUDENT: "Phụ Huynh Học Sinh (Tra cứu & Tương tác)",
     ROLE_STUDENT: "Học Sinh (Tra cứu điểm & rèn luyện)"
