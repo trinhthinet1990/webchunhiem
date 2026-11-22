@@ -39,7 +39,7 @@ def get_classroom_seatmap(context: Dict[str, Any] = Depends(get_current_user_con
 
     return {
         "class_name": "Lớp 12A1 - Chuyên Ban Tự Nhiên",
-        "homeroom_teacher": "Cô Hoàng Mai Anh",
+        "homeroom_teacher": "Giáo Viên Chủ Nhiệm",
         "total_students": len(students),
         "rows": 5,
         "cols": 6,

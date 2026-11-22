@@ -66,9 +66,11 @@ class UserRegisterRequest(BaseModel):
     username: Optional[str] = Field(default=None, description="Tên đăng nhập (nếu để trống sẽ dùng email)")
     password: str = Field(..., min_length=6, description="Mật khẩu (ít nhất 6 ký tự)")
     full_name: str = Field(..., min_length=2, description="Họ và tên người dùng")
-    role: str = Field(default="parent_student", description="Vai trò: teacher, monitor, parent_student, student")
-    duty: Optional[str] = Field(default=None, description="Nhiệm vụ cụ thể của cán bộ lớp (Lớp trưởng, Lớp phó học tập, Lớp phó nề nếp...)")
-    student_id: Optional[int] = Field(default=None, description="ID học sinh liên kết 1-1 (CHỈ BẮT BUỘC KHI LÀ PHỤ HUYNH)")
+    role: str = Field(default="student", description="Vai trò: teacher, student, monitor, parent_student")
+    is_class_leader: Optional[bool] = Field(default=False, description="Nếu là học sinh và là lớp trưởng thì là mod")
+    duty: Optional[str] = Field(default=None, description="Nhiệm vụ cụ thể của cán bộ lớp (Lớp trưởng, Lớp phó học tập...)")
+    student_id: Optional[int] = Field(default=None, description="ID học sinh liên kết 1-1 (dành cho phụ huynh)")
+    child_name: Optional[str] = Field(default=None, description="Tên con em (nếu phụ huynh tạo mới hồ sơ học sinh)")
     avatar: Optional[str] = Field(default=None, description="URL ảnh đại diện")
 
 class UserLoginRequest(BaseModel):

@@ -7,7 +7,42 @@ const ParentPortal = {
     const container = document.getElementById('parent-portal-container');
     if (!container) return;
 
-    const studentId = API.currentStudentId || 2; // Default to Trần Bảo Ngọc (id: 2)
+    let studentId = API.currentStudentId || (API.currentUser ? API.currentUser.student_id : null);
+    
+    // Fetch students list to either find a student or populate selector
+    let classStudents = [];
+    try {
+      const res = await API.getStudents();
+      classStudents = Array.isArray(res) ? res : (res.students || []);
+    } catch (e) {
+      classStudents = [];
+    }
+
+    if ((!studentId || studentId <= 0) && classStudents.length > 0) {
+      studentId = classStudents[0].id;
+      API.currentStudentId = studentId;
+    }
+
+    if (!studentId || classStudents.length === 0) {
+      container.innerHTML = `
+        <div class="p-12 text-center bg-slate-900/80 rounded-2xl border border-sky-500/30 shadow-2xl space-y-4">
+          <div class="w-16 h-16 rounded-2xl bg-sky-500/10 text-sky-400 flex items-center justify-center mx-auto text-3xl border border-sky-500/30">
+            <i class="fa-solid fa-house-user"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Chưa Có Hồ Sơ Học Sinh Liên Kết</h3>
+          <p class="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+            Lớp học hiện chưa có học sinh hoặc tài khoản chưa liên kết với học sinh nào.
+            Phụ huynh hoặc học sinh có thể đăng ký tài khoản mới để hệ thống tự động khởi tạo hồ sơ và sơ đồ lớp 360°.
+          </p>
+          <div class="pt-2">
+            <button onclick="AuthModal.open('register')" class="px-5 py-2.5 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-sky-900/40 transition">
+              <i class="fa-solid fa-user-plus mr-1.5"></i> Đăng Ký Tài Khoản Học Sinh / Phụ Huynh
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
 
     try {
       const [data, requests, comms] = await Promise.all([
@@ -127,15 +162,17 @@ const ParentPortal = {
                 ` : '<div class="p-4 bg-slate-900/50 rounded-xl text-center text-xs text-slate-400">Chưa có bản nhận xét định kỳ</div>'}
               </div>
 
-              <!-- Student change switcher for demo -->
-              <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
-                <span class="text-slate-400">Đổi xem học sinh khác (Demo):</span>
-                <select onchange="ParentPortal.changeStudent(this.value)" class="bg-slate-900 text-slate-200 rounded-lg px-2.5 py-1 border border-slate-700 text-xs">
-                  <option value="2" ${studentId === 2 ? 'selected' : ''}>HS1202 - Trần Bảo Ngọc (Xuất sắc)</option>
-                  <option value="6" ${studentId === 6 ? 'selected' : ''}>HS1206 - Phạm Minh Trí (Cảnh báo sút giảm)</option>
-                  <option value="1" ${studentId === 1 ? 'selected' : ''}>HS1201 - Nguyễn Đức Huy (Lớp trưởng)</option>
-                </select>
-              </div>
+              <!-- Student change switcher -->
+              ${classStudents.length > 1 ? `
+                <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                  <span class="text-slate-400">Chọn học sinh trong lớp:</span>
+                  <select onchange="ParentPortal.changeStudent(this.value)" class="bg-slate-900 text-slate-200 rounded-lg px-2.5 py-1 border border-slate-700 text-xs">
+                    ${classStudents.map(st => `
+                      <option value="${st.id}" ${studentId === st.id ? 'selected' : ''}>${st.student_code} - ${st.full_name}</option>
+                    `).join('')}
+                  </select>
+                </div>
+              ` : ''}
             </div>
 
           </div>

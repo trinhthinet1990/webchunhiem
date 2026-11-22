@@ -9,8 +9,8 @@ const MonitorPortal = {
 
     try {
       const loggedUser = API.currentUser;
-      const officerName = loggedUser ? loggedUser.full_name : 'Nguyễn Đức Huy';
-      const officerDuty = (loggedUser && loggedUser.duty) ? loggedUser.duty : 'Lớp Trưởng';
+      const officerName = loggedUser ? loggedUser.full_name : 'Lớp Trưởng (Mod)';
+      const officerDuty = (loggedUser && loggedUser.duty) ? loggedUser.duty : 'Lớp Trưởng (Mod)';
 
       const [todayAtt, leaderboard] = await Promise.all([
         API.getTodayAttendance(),
@@ -25,7 +25,7 @@ const MonitorPortal = {
             <div>
               <div class="flex items-center space-x-2">
                 <span class="text-2xl">🎖️ ⚡</span>
-                <h3 class="text-xl font-bold text-white">Cổng Ban Cán Sự Lớp • Điểm Danh & Nề Nếp</h3>
+                <h3 class="text-xl font-bold text-white">Cổng Ban Cán Sự Lớp (Mod) • Điểm Danh & Nề Nếp</h3>
               </div>
               <p class="text-xs text-slate-300 mt-1">Đang thực hiện nhiệm vụ: <strong class="text-amber-300 font-bold">${officerDuty} • ${officerName}</strong></p>
             </div>
@@ -43,20 +43,27 @@ const MonitorPortal = {
                 <i class="fa-solid fa-list-check text-amber-400 mr-2"></i> Danh Sách Điểm Danh Đầu Giờ Tiết 1
               </h4>
               <div class="text-xs text-slate-400">
-                Hôm nay: <strong class="text-indigo-300">${todayAtt.date}</strong> • Sỉ số: ${todayAtt.total} học sinh
+                Hôm nay: <strong class="text-indigo-300">${todayAtt.date}</strong> • Sĩ số: ${todayAtt.total} học sinh
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              ${todayAtt.records.map(r => `
-                <div class="p-3 bg-slate-900/70 rounded-xl border border-slate-700/60 flex items-center justify-between">
-                  <div class="flex items-center space-x-2.5 truncate">
-                    <img src="${r.avatar}" class="w-8 h-8 rounded-full object-cover border border-slate-600 flex-shrink-0" alt="">
-                    <div class="truncate">
-                      <div class="font-bold text-white text-xs truncate">${r.full_name}</div>
-                      <div class="text-[10px] text-slate-400">Hàng ${r.seat_row}, Ghế ${r.seat_col}</div>
+            ${todayAtt.records.length === 0 ? `
+              <div class="p-8 text-center bg-slate-900/60 rounded-xl border border-slate-700/60 space-y-2">
+                <i class="fa-solid fa-users-slash text-2xl text-slate-500"></i>
+                <div class="text-xs text-slate-400">Lớp học hiện chưa có học sinh nào đăng ký.</div>
+                <p class="text-[11px] text-slate-500">Khi các bạn học sinh tạo tài khoản, danh sách học sinh sẽ tự động hiển thị để điểm danh 1-chạm.</p>
+              </div>
+            ` : `
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                ${todayAtt.records.map(r => `
+                  <div class="p-3 bg-slate-900/70 rounded-xl border border-slate-700/60 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5 truncate">
+                      <img src="${r.avatar}" class="w-8 h-8 rounded-full object-cover border border-slate-600 flex-shrink-0" alt="">
+                      <div class="truncate">
+                        <div class="font-bold text-white text-xs truncate">${r.full_name}</div>
+                        <div class="text-[10px] text-slate-400">Hàng ${r.seat_row}, Ghế ${r.seat_col}</div>
+                      </div>
                     </div>
-                  </div>
 
                   <div class="flex items-center space-x-1 flex-shrink-0 ml-2">
                     <button onclick="MonitorPortal.quickMark(${r.student_id}, 'present')" 

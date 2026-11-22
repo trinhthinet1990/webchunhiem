@@ -6,7 +6,7 @@ const API = {
   token: localStorage.getItem('homeroom_token') || null,
   currentUser: JSON.parse(localStorage.getItem('homeroom_user') || 'null'),
   currentRole: localStorage.getItem('homeroom_role') || 'teacher',
-  currentStudentId: parseInt(localStorage.getItem('homeroom_student_id') || '2'),
+  currentStudentId: parseInt(localStorage.getItem('homeroom_student_id') || '0'),
 
   setRole(role, studentId = null) {
     this.currentRole = role;

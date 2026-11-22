@@ -11,6 +11,7 @@ from app.config import (
     ROLE_MONITOR,
     ROLE_PARENT_STUDENT,
     ROLE_STUDENT,
+    ROLE_ADMIN,
     CLASS_DUTIES,
     SUPABASE_URL
 )
@@ -56,14 +57,16 @@ def verify_password(plain_password: str, stored_hash: Optional[str]) -> bool:
 
 def get_user_display_label(role: str, duty: Optional[str] = None) -> str:
     """
-    Tạo nhãn hiển thị trực quan cho người dùng, nêu rõ chức danh nếu là cán bộ lớp
+    Tạo nhãn hiển thị trực quan cho người dùng, nêu rõ chức danh nếu là cán bộ lớp/Mod
     """
     if duty:
         return f"⭐ {duty}"
-    if role == ROLE_TEACHER:
+    if role == ROLE_ADMIN:
+        return "🛡️ Quản Trị Viên (Admin)"
+    elif role == ROLE_TEACHER:
         return "👑 Giáo Viên Chủ Nhiệm"
     elif role == ROLE_MONITOR:
-        return "⭐ Cán Sự Lớp"
+        return "⭐ Lớp Trưởng (Mod)"
     elif role == ROLE_PARENT_STUDENT:
         return "👨‍👩‍👧 Phụ Huynh Học Sinh"
     elif role == ROLE_STUDENT:
@@ -152,21 +155,172 @@ def register(body: UserRegisterRequest):
         except Exception:
             pass
 
-    # 3. Validate Role & Duty
-    role = body.role if body.role in ROLES_MAP else ROLE_PARENT_STUDENT
-    duty = body.duty.strip() if body.duty else None
+    # 3. Phân loại vai trò người dùng (Giáo viên, Học sinh, Phụ huynh)
+    # Đặc biệt: Nếu là học sinh và là lớp trưởng thì là Mod (role: monitor)
+    raw_role = body.role
+    is_class_leader = bool(body.is_class_leader or (raw_role == ROLE_MONITOR) or (body.duty and "Lớp Trưởng" in body.duty))
     
-    # QUY TẮC CỐT LÕI: Chỉ phụ huynh mới liên kết 1-1 với học sinh
-    if role == ROLE_PARENT_STUDENT:
-        if not body.student_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Tài khoản Phụ huynh bắt buộc phải chọn học sinh liên kết (1-1) trong danh sách lớp 12A1."
-            )
-        student_id = body.student_id
-    else:
-        # Cán bộ lớp (monitor) và GVCN (teacher) KHÔNG liên kết học sinh con em
+    student_id = None
+    duty = None
+
+    if raw_role == ROLE_TEACHER:
+        role = ROLE_TEACHER
+        duty = None
         student_id = None
+
+    elif raw_role in [ROLE_STUDENT, ROLE_MONITOR]:
+        # Người dùng đăng ký là HỌC SINH
+        if is_class_leader:
+            role = ROLE_MONITOR  # Mod điều hành lớp
+            duty = body.duty.strip() if body.duty else "Lớp Trưởng (Mod)"
+        else:
+            role = ROLE_STUDENT  # Học sinh thông thường
+            duty = None
+
+        # TỰ ĐỘNG TẠO / LIÊN KẾT HỒ SƠ HỌC SINH TRONG BẢNG students:
+        existing_student = query_one(
+            "SELECT id FROM students WHERE LOWER(full_name) = ?",
+            (body.full_name.strip().lower(),)
+        )
+        if existing_student:
+            student_id = existing_student["id"]
+        else:
+            # Tìm vị trí ghế ngồi còn trống (5 hàng x 6 cột)
+            occupied = query_all("SELECT seat_row, seat_col FROM students")
+            occupied_set = {(s["seat_row"], s["seat_col"]) for s in occupied}
+
+            assigned_row, assigned_col = 1, 1
+            found_seat = False
+            for r in range(1, 6):
+                for c in range(1, 7):
+                    if (r, c) not in occupied_set:
+                        assigned_row, assigned_col = r, c
+                        found_seat = True
+                        break
+                if found_seat:
+                    break
+            if not found_seat:
+                assigned_row, assigned_col = 5, 6
+
+            # Sinh mã học sinh HS...
+            st_count = query_one("SELECT COUNT(*) as c FROM students")["c"]
+            student_code = f"HS{str(st_count + 1).zfill(2)}"
+
+            badge = "Lớp Trưởng Gương Mẫu" if role == ROLE_MONITOR else "Học Sinh Tiêu Biểu"
+            student_avatar = body.avatar or f"https://api.dicebear.com/7.x/bottts/svg?seed={username}"
+
+            student_id = execute_commit("""
+                INSERT INTO students (
+                    student_code, full_name, gender, seat_row, seat_col,
+                    conduct, academic_rank, gpa, gamified_points, badge,
+                    parent_name, parent_email, avatar, health_notes, teacher_notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                student_code,
+                body.full_name.strip(),
+                "Nam",
+                assigned_row,
+                assigned_col,
+                "Tốt",
+                "Khá",
+                8.0,
+                100,
+                badge,
+                f"Phụ huynh em {body.full_name.strip()}",
+                email,
+                student_avatar,
+                "Bình thường",
+                "Học sinh tự đăng ký tài khoản"
+            ))
+
+            # Khởi tạo 5 môn học mặc định trong academic_grades
+            for subj in ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học"]:
+                execute_commit("""
+                    INSERT INTO academic_grades (student_id, subject, tx1, tx2, gk, ck, average, trend, warning_flag)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (student_id, subj, 8.0, 8.0, 8.0, 8.0, 8.0, "stable", 0))
+
+    elif raw_role == ROLE_PARENT_STUDENT:
+        role = ROLE_PARENT_STUDENT
+        duty = None
+        # Phụ huynh liên kết con em trong lớp
+        if body.student_id:
+            student_id = body.student_id
+            execute_commit(
+                "UPDATE students SET parent_name = ?, parent_email = ? WHERE id = ?",
+                (body.full_name.strip(), email, student_id)
+            )
+        elif body.child_name and body.child_name.strip():
+            # Con em chưa có tài khoản, phụ huynh nhập tên con để tạo hồ sơ
+            child_name = body.child_name.strip()
+            existing_child = query_one("SELECT id FROM students WHERE LOWER(full_name) = ?", (child_name.lower(),))
+            if existing_child:
+                student_id = existing_child["id"]
+                execute_commit(
+                    "UPDATE students SET parent_name = ?, parent_email = ? WHERE id = ?",
+                    (body.full_name.strip(), email, student_id)
+                )
+            else:
+                occupied = query_all("SELECT seat_row, seat_col FROM students")
+                occupied_set = {(s["seat_row"], s["seat_col"]) for s in occupied}
+                assigned_row, assigned_col = 1, 1
+                found_seat = False
+                for r in range(1, 6):
+                    for c in range(1, 7):
+                        if (r, c) not in occupied_set:
+                            assigned_row, assigned_col = r, c
+                            found_seat = True
+                            break
+                    if found_seat:
+                        break
+                st_count = query_one("SELECT COUNT(*) as c FROM students")["c"]
+                student_code = f"HS{str(st_count + 1).zfill(2)}"
+                student_avatar = f"https://api.dicebear.com/7.x/bottts/svg?seed={student_code}"
+
+                student_id = execute_commit("""
+                    INSERT INTO students (
+                        student_code, full_name, gender, seat_row, seat_col,
+                        conduct, academic_rank, gpa, gamified_points, badge,
+                        parent_name, parent_email, avatar, health_notes, teacher_notes
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    student_code,
+                    child_name,
+                    "Nam",
+                    assigned_row,
+                    assigned_col,
+                    "Tốt",
+                    "Khá",
+                    8.0,
+                    100,
+                    "Học Sinh Tiêu Biểu",
+                    body.full_name.strip(),
+                    email,
+                    student_avatar,
+                    "Bình thường",
+                    "Hồ sơ do phụ huynh tạo khi đăng ký"
+                ))
+
+                for subj in ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học"]:
+                    execute_commit("""
+                        INSERT INTO academic_grades (student_id, subject, tx1, tx2, gk, ck, average, trend, warning_flag)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (student_id, subj, 8.0, 8.0, 8.0, 8.0, 8.0, "stable", 0))
+        else:
+            all_st = query_all("SELECT id FROM students LIMIT 1")
+            if all_st:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Vui lòng chọn con em học sinh trong danh sách hoặc nhập họ tên con em."
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Lớp học chưa có học sinh nào. Vui lòng nhập họ tên con em để hệ thống tạo hồ sơ liên kết."
+                )
+    else:
+        role = ROLE_STUDENT
+        duty = None
 
     # Avatar mặc định theo vai trò
     avatar = body.avatar
@@ -176,7 +330,7 @@ def register(body: UserRegisterRequest):
         elif role == ROLE_MONITOR:
             avatar = "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80"
         else:
-            avatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+            avatar = f"https://api.dicebear.com/7.x/bottts/svg?seed={username}"
 
     # 4. Băm mật khẩu
     hashed_password = hash_password(body.password)
@@ -338,7 +492,7 @@ def login(body: UserLoginRequest):
             "full_name": user["full_name"],
             "role": user["role"],
             "role_label": get_user_display_label(user["role"], user.get("duty")),
-            "student_id": user.get("student_id") or (2 if user["role"] == ROLE_PARENT_STUDENT else None),
+            "student_id": user.get("student_id"),
             "avatar": user.get("avatar")
         }
     }

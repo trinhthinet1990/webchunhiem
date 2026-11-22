@@ -125,51 +125,84 @@ const AuthModal = {
   },
 
   /**
-   * Xử lý hiển thị điều kiện theo vai trò:
-   * 1. Phụ huynh: BẮT BUỘC hiện chọn học sinh liên kết (1-1)
-   * 2. Ban cán sự lớp: BẮT BUỘC hiện chọn nhiệm vụ cụ thể của cán sự, ẨN học sinh liên kết
-   * 3. Giáo viên / Học sinh: Ẩn cả 2
+   * Cập nhật hiển thị form đăng ký theo vai trò được chọn:
+   * 1. Học sinh: Hiện tùy chọn "Là Lớp Trưởng (Mod)"
+   * 2. Giáo viên: Hiện ghi chú quyền hạn GVCN
+   * 3. Phụ huynh: Hiện danh sách chọn con em (hoặc nhập tên con)
    */
   onRoleChange(role) {
+    const studentModGroup = document.getElementById('reg-student-mod-group');
+    const teacherNotice = document.getElementById('reg-teacher-notice');
     const studentPicker = document.getElementById('reg-student-picker');
-    const dutyGroup = document.getElementById('reg-duty-group');
 
-    // 1. Chỉ phụ huynh mới liên kết 1-1 đến học sinh
-    if (studentPicker) {
-      if (role === 'parent_student') {
+    if (role === 'student') {
+      if (studentModGroup) studentModGroup.classList.remove('hidden');
+      if (teacherNotice) teacherNotice.classList.add('hidden');
+      if (studentPicker) studentPicker.classList.add('hidden');
+    } else if (role === 'teacher') {
+      if (studentModGroup) studentModGroup.classList.add('hidden');
+      if (teacherNotice) teacherNotice.classList.remove('hidden');
+      if (studentPicker) studentPicker.classList.add('hidden');
+    } else if (role === 'parent_student') {
+      if (studentModGroup) studentModGroup.classList.add('hidden');
+      if (teacherNotice) teacherNotice.classList.add('hidden');
+      if (studentPicker) {
         studentPicker.classList.remove('hidden');
-      } else {
-        studentPicker.classList.add('hidden');
+        this.populateStudentDropdown();
       }
     }
+  },
 
-    // 2. Cán bộ lớp: Hiển thị chọn nhiệm vụ / chức danh cụ thể
-    if (dutyGroup) {
-      if (role === 'monitor') {
-        dutyGroup.classList.remove('hidden');
+  onClassLeaderToggle(isChecked) {
+    const dutySelector = document.getElementById('reg-duty-selector');
+    if (dutySelector) {
+      if (isChecked) {
+        dutySelector.classList.remove('hidden');
       } else {
-        dutyGroup.classList.add('hidden');
+        dutySelector.classList.add('hidden');
+      }
+    }
+  },
+
+  onStudentSelectChange(val) {
+    const customContainer = document.getElementById('reg-child-name-container');
+    if (customContainer) {
+      if (val === '__custom__' || val === '') {
+        customContainer.classList.remove('hidden');
+      } else {
+        customContainer.classList.add('hidden');
       }
     }
   },
 
   async populateStudentDropdown() {
     const select = document.getElementById('reg-student-id');
+    const customContainer = document.getElementById('reg-child-name-container');
     if (!select) return;
 
     try {
-      const students = await API.getStudents();
-      select.innerHTML = '<option value="">-- Chọn con em học sinh trong lớp 12A1 --</option>';
-      students.forEach(st => {
-        const opt = document.createElement('option');
-        opt.value = st.id;
-        opt.textContent = `${st.student_code} - ${st.full_name} (Bàn ${st.seat_row}-${st.seat_col} • Bố mẹ: ${st.parent_name || 'PH'})`;
-        select.appendChild(opt);
-      });
+      const res = await API.getStudents();
+      const students = Array.isArray(res) ? res : (res.students || []);
+
+      select.innerHTML = '';
+      if (students.length === 0) {
+        select.innerHTML = '<option value="">-- Chưa có học sinh đăng ký (Nhập tên con bên dưới) --</option>';
+        if (customContainer) customContainer.classList.remove('hidden');
+      } else {
+        select.innerHTML = '<option value="">-- Chọn con em học sinh trong lớp 12A1 --</option>';
+        students.forEach(st => {
+          const opt = document.createElement('option');
+          opt.value = st.id;
+          opt.textContent = `${st.student_code} - ${st.full_name} (Bàn ${st.seat_row}-${st.seat_col})`;
+          select.appendChild(opt);
+        });
+        select.innerHTML += '<option value="__custom__">➕ Con em chưa có trong danh sách (Nhập họ tên mới)</option>';
+      }
       this.studentsLoaded = true;
     } catch (err) {
       console.warn('Không thể tải danh sách học sinh:', err);
-      select.innerHTML = '<option value="2">HS1202 - Trần Bảo Ngọc</option>';
+      select.innerHTML = '<option value="">-- Nhập tên con em bên dưới --</option>';
+      if (customContainer) customContainer.classList.remove('hidden');
     }
   },
 
@@ -278,23 +311,29 @@ const AuthModal = {
       return;
     }
 
-    // Xử lý logic vai trò:
+    // Xử lý logic vai trò: Giáo viên, Học sinh (Lớp trưởng là Mod), Phụ huynh
+    const isClassLeader = document.getElementById('reg-is-class-leader')?.checked || false;
     let duty = null;
     let studentId = null;
+    let childName = null;
 
-    if (role === 'monitor') {
-      // Cán bộ lớp: Lấy chức danh/nhiệm vụ cụ thể
-      const dutySelect = document.getElementById('reg-duty');
-      duty = dutySelect ? dutySelect.value : 'Cán sự lớp';
-      studentId = null; // Cán bộ lớp KHÔNG liên kết học sinh con em
+    if (role === 'student') {
+      if (isClassLeader) {
+        const dutySelect = document.getElementById('reg-duty');
+        duty = dutySelect ? dutySelect.value : 'Lớp Trưởng (Mod)';
+      }
     } else if (role === 'parent_student') {
-      // Phụ huynh: BẮT BUỘC chọn học sinh liên kết 1-1
-      const studentIdVal = document.getElementById('reg-student-id').value;
-      if (!studentIdVal) {
-        this.showAlert('Tài khoản Phụ huynh bắt buộc phải chọn học sinh con em liên kết (1-1).');
+      const studentIdVal = document.getElementById('reg-student-id')?.value;
+      const childNameVal = document.getElementById('reg-child-name')?.value?.trim();
+
+      if (studentIdVal && studentIdVal !== '__custom__') {
+        studentId = parseInt(studentIdVal);
+      } else if (childNameVal) {
+        childName = childNameVal;
+      } else {
+        this.showAlert('Tài khoản Phụ huynh cần chọn con em trong danh sách hoặc nhập họ tên con em.');
         return;
       }
-      studentId = parseInt(studentIdVal);
     }
 
     const originalBtnHtml = submitBtn.innerHTML;
@@ -307,9 +346,11 @@ const AuthModal = {
         username: email, // Sử dụng email làm tên định danh
         password: password,
         full_name: fullName,
-        role: role,
+        role: (role === 'student' && isClassLeader) ? 'monitor' : role,
+        is_class_leader: isClassLeader,
         duty: duty,
-        student_id: studentId
+        student_id: studentId,
+        child_name: childName
       };
 
       let res;

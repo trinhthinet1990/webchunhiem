@@ -32,9 +32,25 @@ const TeacherDashboard = {
         <!-- Teacher podium -->
         <div class="teacher-podium px-6 py-2 rounded-lg text-slate-200 text-xs font-semibold shadow flex items-center space-x-2">
           <i class="fa-solid fa-chalkboard-user text-indigo-400"></i>
-          <span>BÀN GIÁO VIÊN CHỦ NHIỆM (Cô Hoàng Mai Anh)</span>
+          <span>BÀN GIÁO VIÊN CHỦ NHIỆM</span>
         </div>
       </div>
+
+      ${data.total_students === 0 ? `
+        <div class="max-w-2xl mx-auto mb-6 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex items-center justify-between shadow-lg">
+          <div class="flex items-center space-x-3 text-xs text-indigo-300">
+            <i class="fa-solid fa-chair text-xl text-indigo-400"></i>
+            <div>
+              <strong class="font-bold text-white">Sơ đồ lớp 12A1 đang sẵn sàng:</strong>
+              Hiện chưa có học sinh trong lớp. Khi học sinh đăng ký tài khoản, vị trí ghế ngồi sẽ tự động được gán và hiển thị tại đây!
+            </div>
+          </div>
+          <button onclick="AuthModal.open('register')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 flex-shrink-0 ml-3">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Đăng Ký Học Sinh</span>
+          </button>
+        </div>
+      ` : ''}
 
       <!-- 3 Columns of Double Desks (6 cols total) -->
       <div class="grid grid-cols-3 gap-6 max-w-6xl mx-auto">

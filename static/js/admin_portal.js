@@ -57,7 +57,7 @@ const AdminPortal = {
                 </span>
               </div>
               <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                Toàn quyền kiểm soát và điều hành 4 tầng kiến trúc: Quản lý người dùng & phân quyền RBAC, hồ sơ 36 học sinh, điểm danh, bảng điểm, thi đua nề nếp, duyệt đơn nghỉ và bảo trì cơ sở dữ liệu Supabase Cloud.
+                Toàn quyền kiểm soát và điều hành 4 tầng kiến trúc: Quản lý người dùng & phân quyền RBAC, hồ sơ học sinh, điểm danh, bảng điểm, thi đua nề nếp, duyệt đơn nghỉ và bảo trì cơ sở dữ liệu Supabase Cloud.
               </p>
             </div>
           </div>
@@ -343,7 +343,7 @@ const AdminPortal = {
                 <h4 class="font-bold text-sm text-white flex items-center">
                   <i class="fa-solid fa-chart-column text-purple-400 mr-2"></i> Phân Bố Học Lực Lớp 12A1
                 </h4>
-                <span class="text-xs text-slate-400">36 Học Sinh</span>
+                <span class="text-xs text-slate-400">${c.students || 0} Học Sinh</span>
               </div>
               <div class="space-y-3">
                 ${Object.entries({
@@ -352,7 +352,8 @@ const AdminPortal = {
                   'Trung bình': { cnt: rankDist['Trung bình'] || 0, color: 'bg-amber-500', text: 'text-amber-400' },
                   'Yếu': { cnt: rankDist['Yếu'] || 0, color: 'bg-rose-500', text: 'text-rose-400' }
                 }).map(([rank, data]) => {
-                  const pct = Math.round((data.cnt / 36) * 100);
+                  const totalSt = Math.max(1, c.students || 0);
+                  const pct = Math.round((data.cnt / totalSt) * 100);
                   return `
                     <div>
                       <div class="flex justify-between text-xs font-semibold mb-1">
@@ -383,7 +384,8 @@ const AdminPortal = {
                   'Trung bình': { cnt: conductDist['Trung bình'] || 0, color: 'bg-amber-500', text: 'text-amber-400' },
                   'Yếu': { cnt: conductDist['Yếu'] || 0, color: 'bg-rose-500', text: 'text-rose-400' }
                 }).map(([conduct, data]) => {
-                  const pct = Math.round((data.cnt / 36) * 100);
+                  const totalSt = Math.max(1, c.students || 0);
+                  const pct = Math.round((data.cnt / totalSt) * 100);
                   return `
                     <div>
                       <div class="flex justify-between text-xs font-semibold mb-1">
@@ -1055,7 +1057,7 @@ const AdminPortal = {
             <div class="grid grid-cols-3 gap-3">
               <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Mã STT (ID) *</label>
-                <input type="number" id="new-student-id" required value="${(this.cache.students.length || 36) + 1}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500 font-mono">
+                <input type="number" id="new-student-id" required value="${(this.cache.students.length || 0) + 1}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500 font-mono">
               </div>
               <div class="col-span-2">
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Họ và Tên Học Sinh *</label>
