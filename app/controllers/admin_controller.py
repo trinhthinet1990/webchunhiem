@@ -100,7 +100,7 @@ def get_admin_dashboard_stats(context: Dict[str, Any] = Depends(require_roles([R
     return {
         "success": True,
         "class_info": {
-            "name": "Lớp 12A1",
+            "name": "Lớp 11A5",
             "school_year": "2025 - 2026",
             "curriculum": "Chuyên Ban Tự Nhiên (Toán - Lý - Hóa)",
             "homeroom_teacher": "Giáo Viên Chủ Nhiệm",

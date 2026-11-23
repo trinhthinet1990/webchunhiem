@@ -40,7 +40,7 @@ Hệ thống được thiết kế chuẩn mực theo mô hình phân tầng tro
 ### 4. Tầng Cơ Sở Dữ Liệu (Database)
 - **Main Homeroom DB**: Hỗ trợ linh hoạt cả **Supabase Cloud (PostgreSQL)** lẫn **SQLite (Cục bộ)** với 8 bảng dữ liệu quan hệ:
   - `users`: Tài khoản và vai trò RBAC (`teacher`, `monitor`, `parent_student`).
-  - `students`: Hồ sơ 30 học sinh lớp 12A1 & vị trí ma trận chỗ ngồi.
+  - `students`: Hồ sơ học sinh lớp 11A5 & vị trí ma trận chỗ ngồi.
   - `attendance_logs`: Lịch sử điểm danh chuyên cần theo buổi/tiết.
   - `gamified_points_logs`: Nhật ký cộng/trừ điểm thi đua.
   - `academic_grades`: Bảng điểm chi tiết 5 môn học chính (Toán, Văn, Anh, Lý, Hóa).

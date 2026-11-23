@@ -25,7 +25,7 @@ const TeacherDashboard = {
       <!-- Classroom Stage & Blackboard -->
       <div class="mb-6 flex flex-col items-center">
         <div class="chalkboard w-full max-w-2xl py-3 px-8 rounded-xl text-center text-emerald-200 shadow-xl mb-4 border-2 border-amber-900/60">
-          <div class="font-bold text-sm tracking-wider uppercase">BẢNG LỚP 12A1 • CHUYÊN BAN TỰ NHIÊN</div>
+          <div class="font-bold text-sm tracking-wider uppercase">BẢNG LỚP 11A5 • CHUYÊN BAN TỰ NHIÊN</div>
           <div class="text-[11px] text-emerald-300/80 italic mt-0.5">"Học để biết, học để làm, học để chung sống, học để tự khẳng định mình"</div>
         </div>
         
@@ -41,7 +41,7 @@ const TeacherDashboard = {
           <div class="flex items-center space-x-3 text-xs text-indigo-300">
             <i class="fa-solid fa-chair text-xl text-indigo-400"></i>
             <div>
-              <strong class="font-bold text-white">Sơ đồ lớp 12A1 đang sẵn sàng:</strong>
+              <strong class="font-bold text-white">Sơ đồ lớp 11A5 đang sẵn sàng:</strong>
               Hiện chưa có học sinh trong lớp. Khi học sinh đăng ký tài khoản, vị trí ghế ngồi sẽ tự động được gán và hiển thị tại đây!
             </div>
           </div>
@@ -215,19 +215,26 @@ const TeacherDashboard = {
               </div>
             </div>
 
-            <!-- Quick Action: Award Points & Quick Mark -->
-            <div class="flex items-center space-x-2">
-              <button onclick="TeacherDashboard.quickAwardPointsModal(${s.id}, '${s.full_name}')" 
-                      class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition">
-                <i class="fa-solid fa-star"></i>
-                <span>Cộng/Trừ Điểm Thi Đua</span>
-              </button>
-              <button onclick="TeacherDashboard.quickNotifyParentModal(${s.id}, '${s.full_name}', '${s.parent_name}', '${s.parent_phone}')"
-                      class="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition">
-                <i class="fa-solid fa-comment-sms"></i>
-                <span>Gửi Zalo/SMS PH</span>
-              </button>
-            </div>
+            <!-- Quick Action: Award Points & Quick Mark (Chỉ GVCN & Mod) -->
+            ${(API.currentRole === 'student' || API.currentRole === 'parent_student') ? `
+              <div class="px-3 py-1.5 bg-slate-800/80 text-slate-400 rounded-lg text-xs border border-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-lock text-slate-500"></i>
+                <span>Chế độ: Chỉ xem</span>
+              </div>
+            ` : `
+              <div class="flex items-center space-x-2">
+                <button onclick="TeacherDashboard.quickAwardPointsModal(${s.id}, '${s.full_name}')" 
+                        class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition">
+                  <i class="fa-solid fa-star"></i>
+                  <span>Cộng/Trừ Điểm Thi Đua</span>
+                </button>
+                <button onclick="TeacherDashboard.quickNotifyParentModal(${s.id}, '${s.full_name}', '${s.parent_name}', '${s.parent_phone}')"
+                        class="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition">
+                  <i class="fa-solid fa-comment-sms"></i>
+                  <span>Gửi Zalo/SMS PH</span>
+                </button>
+              </div>
+            `}
           </div>
 
           <!-- 3 Columns Stats -->
@@ -428,7 +435,7 @@ const TeacherDashboard = {
             <div class="p-4 border-b border-slate-700 flex flex-wrap items-center justify-between gap-4">
               <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-clipboard-check text-indigo-400 text-lg"></i>
-                <h3 class="font-bold text-white text-base">Sổ Điểm Danh Lớp 12A1 Hôm Nay (${data.date})</h3>
+                <h3 class="font-bold text-white text-base">Sổ Điểm Danh Lớp 11A5 Hôm Nay (${data.date})</h3>
               </div>
               <div class="text-xs text-slate-400">
                 Tỷ lệ chuyên cần hiện tại: <strong class="text-emerald-400 text-sm">${stats.attendance_rate}%</strong>
@@ -472,24 +479,28 @@ const TeacherDashboard = {
                         </span>
                       </td>
                       <td class="py-3 px-4 text-center">
-                        <div class="inline-flex rounded-lg border border-slate-700 p-0.5 bg-slate-900/80 space-x-1">
-                          <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'present')" 
-                                  class="px-2 py-1 rounded text-[10px] ${r.status === 'present' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}">
-                            Có mặt
-                          </button>
-                          <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'late')" 
-                                  class="px-2 py-1 rounded text-[10px] ${r.status === 'late' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}">
-                            Muộn
-                          </button>
-                          <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'excused')" 
-                                  class="px-2 py-1 rounded text-[10px] ${r.status === 'excused' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'}">
-                            Có phép
-                          </button>
-                          <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'unexcused')" 
-                                  class="px-2 py-1 rounded text-[10px] ${r.status === 'unexcused' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'}">
-                            Vắng K.phép
-                          </button>
-                        </div>
+                        ${(API.currentRole === 'student' || API.currentRole === 'parent_student') ? `
+                          <span class="text-[11px] text-slate-500 italic"><i class="fa-solid fa-lock text-slate-600 mr-1"></i>Chỉ xem</span>
+                        ` : `
+                          <div class="inline-flex rounded-lg border border-slate-700 p-0.5 bg-slate-900/80 space-x-1">
+                            <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'present')" 
+                                    class="px-2 py-1 rounded text-[10px] ${r.status === 'present' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'}">
+                              Có mặt
+                            </button>
+                            <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'late')" 
+                                    class="px-2 py-1 rounded text-[10px] ${r.status === 'late' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}">
+                              Muộn
+                            </button>
+                            <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'excused')" 
+                                    class="px-2 py-1 rounded text-[10px] ${r.status === 'excused' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'}">
+                              Có phép
+                            </button>
+                            <button onclick="TeacherDashboard.markAttendanceSingle(${r.student_id}, 'unexcused')" 
+                                    class="px-2 py-1 rounded text-[10px] ${r.status === 'unexcused' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'}">
+                              Vắng K.phép
+                            </button>
+                          </div>
+                        `}
                       </td>
                       <td class="py-3 px-4 text-slate-400 text-xs italic">
                         ${r.note || '<span class="text-slate-600">Không có ghi chú</span>'}
@@ -533,13 +544,20 @@ const TeacherDashboard = {
             <div>
               <div class="flex items-center space-x-2">
                 <span class="text-2xl">🏆 ⭐</span>
-                <h3 class="text-xl font-bold text-white">Bảng Xếp Hạng Thi Đua & Nề Nếp Lớp 12A1</h3>
+                <h3 class="text-xl font-bold text-white">Bảng Xếp Hạng Thi Đua & Nề Nếp Lớp 11A5</h3>
               </div>
               <p class="text-xs text-slate-300 mt-1">Hệ thống Gamification tích lũy điểm thưởng và huy hiệu rèn luyện phẩm chất theo tuần</p>
             </div>
-            <button onclick="TeacherDashboard.batchAwardModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition">
-              <i class="fa-solid fa-plus-circle mr-1"></i> Ghi Nhận Điểm Nề Nếp Mới
-            </button>
+            ${(API.currentRole === 'student' || API.currentRole === 'parent_student') ? `
+              <div class="px-3.5 py-2 bg-slate-800 text-slate-400 text-xs rounded-xl border border-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-lock text-slate-500"></i>
+                <span>Chế độ: Chỉ xem (Chỉ GVCN & Mod mới có quyền ghi nhận)</span>
+              </div>
+            ` : `
+              <button onclick="TeacherDashboard.batchAwardModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition">
+                <i class="fa-solid fa-plus-circle mr-1"></i> Ghi Nhận Điểm Nề Nếp Mới
+              </button>
+            `}
           </div>
 
           <!-- 2 Columns: Top Leaderboard + Recent Feed -->
@@ -775,10 +793,17 @@ const TeacherDashboard = {
               </div>
               <p class="text-xs text-slate-300 mt-1">Động cơ AI tự động tổng hợp kết quả học lực 5 môn, điểm nề nếp chuyên cần và vị trí lớp để sinh nhận xét chuẩn hóa</p>
             </div>
-            <button onclick="TeacherDashboard.batchGenerateAllAI()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center space-x-2">
-              <i class="fa-solid fa-bolt"></i>
-              <span>Sinh Nhận Xét Cho Toàn Bộ 30 Học Sinh (1-Click)</span>
-            </button>
+            ${(API.currentRole === 'student' || API.currentRole === 'parent_student') ? `
+              <div class="px-3.5 py-2 bg-slate-800 text-slate-400 text-xs rounded-xl border border-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-lock text-slate-500"></i>
+                <span>Chế độ: Chỉ xem (Chỉ GVCN mới có quyền tạo nhận xét)</span>
+              </div>
+            ` : `
+              <button onclick="TeacherDashboard.batchGenerateAllAI()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center space-x-2">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Sinh Nhận Xét Cho Toàn Bộ Lớp 11A5 (1-Click)</span>
+              </button>
+            `}
           </div>
 
           <!-- Students List for AI Review -->
@@ -809,7 +834,7 @@ const TeacherDashboard = {
   },
 
   async batchGenerateAllAI() {
-    if (!confirm('Bạn có muốn hệ thống AI Report Writer tự động phân tích và tạo nhận xét sư phạm cho toàn bộ 30 học sinh lớp 12A1 không?')) return;
+    if (!confirm('Bạn có muốn hệ thống AI Report Writer tự động phân tích và tạo nhận xét sư phạm cho toàn bộ học sinh lớp 11A5 không?')) return;
 
     showToast('AI Engine đang tiến hành phân tích học bạ và chuyên cần...', 'info');
     try {

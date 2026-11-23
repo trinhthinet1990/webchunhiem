@@ -221,7 +221,7 @@ const AdminPortal = {
               <div class="text-2xl font-black text-white">${c.students || 0}</div>
               <div class="text-[11px] text-sky-300 mt-1 flex items-center">
                 <span class="w-1.5 h-1.5 rounded-full bg-sky-400 mr-1.5"></span>
-                Lớp 12A1 Chuẩn Hóa
+                Lớp 11A5 Chuẩn Hóa
               </div>
             </div>
 
@@ -341,7 +341,7 @@ const AdminPortal = {
             <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80 shadow-xl space-y-4">
               <div class="flex items-center justify-between pb-3 border-b border-slate-700">
                 <h4 class="font-bold text-sm text-white flex items-center">
-                  <i class="fa-solid fa-chart-column text-purple-400 mr-2"></i> Phân Bố Học Lực Lớp 12A1
+                  <i class="fa-solid fa-chart-column text-purple-400 mr-2"></i> Phân Bố Học Lực Lớp 11A5
                 </h4>
                 <span class="text-xs text-slate-400">${c.students || 0} Học Sinh</span>
               </div>
@@ -373,7 +373,7 @@ const AdminPortal = {
             <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700/80 shadow-xl space-y-4">
               <div class="flex items-center justify-between pb-3 border-b border-slate-700">
                 <h4 class="font-bold text-sm text-white flex items-center">
-                  <i class="fa-solid fa-medal text-amber-400 mr-2"></i> Phân Bố Hạnh Kiểm Lớp 12A1
+                  <i class="fa-solid fa-medal text-amber-400 mr-2"></i> Phân Bố Hạnh Kiểm Lớp 11A5
                 </h4>
                 <span class="text-xs text-slate-400">Đánh giá kỳ I</span>
               </div>
@@ -1015,7 +1015,7 @@ const AdminPortal = {
             </div>
 
             <div class="p-3 bg-slate-900/60 border-t border-slate-700 text-xs text-slate-400 flex justify-between items-center">
-              <span>Hiển thị <strong>${this.cache.students.length}</strong> học sinh lớp 12A1</span>
+              <span>Hiển thị <strong>${this.cache.students.length}</strong> học sinh lớp 11A5</span>
               <span class="text-[11px] text-sky-400"><i class="fa-solid fa-chair mr-1"></i> Tọa độ ghế tương thích hoàn toàn Smart SeatMap Controller</span>
             </div>
           </div>

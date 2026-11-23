@@ -153,6 +153,18 @@ class AdminGradeUpdateRequest(BaseModel):
     gk: Optional[float] = None
     ck: Optional[float] = None
 
+class StudentNotesUpdateRequest(BaseModel):
+    teacher_notes: Optional[str] = None
+    health_notes: Optional[str] = None
+    conduct: Optional[str] = None
+
+class StudentInfoUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    gender: Optional[str] = None
+    conduct: Optional[str] = None
+    health_notes: Optional[str] = None
+    teacher_notes: Optional[str] = None
+
 class AdminAIReportUpdateRequest(BaseModel):
     tone: Optional[str] = None
     generated_text: Optional[str] = None

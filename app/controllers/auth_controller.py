@@ -156,9 +156,13 @@ def register(body: UserRegisterRequest):
             pass
 
     # 3. Phân loại vai trò người dùng (Giáo viên, Học sinh, Phụ huynh)
-    # Đặc biệt: Nếu là học sinh và là lớp trưởng thì là Mod (role: monitor)
+    # Đặc biệt: Ban Cán Sự Lớp (Lớp Trưởng, Lớp Phó Học Tập, Lớp Phó Nề Nếp) là Mod (role: monitor)
     raw_role = body.role
-    is_class_leader = bool(body.is_class_leader or (raw_role == ROLE_MONITOR) or (body.duty and "Lớp Trưởng" in body.duty))
+    is_class_mod = bool(
+        body.is_class_leader 
+        or (raw_role == ROLE_MONITOR) 
+        or (body.duty and any(k in body.duty for k in ["Lớp Trưởng", "Học Tập", "Nề Nếp", "Kỷ Luật", "Cán Sự", "Mod"]))
+    )
     
     student_id = None
     duty = None
@@ -170,11 +174,11 @@ def register(body: UserRegisterRequest):
 
     elif raw_role in [ROLE_STUDENT, ROLE_MONITOR]:
         # Người dùng đăng ký là HỌC SINH
-        if is_class_leader:
-            role = ROLE_MONITOR  # Mod điều hành lớp
+        if is_class_mod:
+            role = ROLE_MONITOR  # Mod quản lý lớp 11A5
             duty = body.duty.strip() if body.duty else "Lớp Trưởng (Mod)"
         else:
-            role = ROLE_STUDENT  # Học sinh thông thường
+            role = ROLE_STUDENT  # Học sinh thông thường (Chỉ có quyền xem)
             duty = None
 
         # TỰ ĐỘNG TẠO / LIÊN KẾT HỒ SƠ HỌC SINH TRONG BẢNG students:
@@ -182,8 +186,21 @@ def register(body: UserRegisterRequest):
             "SELECT id FROM students WHERE LOWER(full_name) = ?",
             (body.full_name.strip().lower(),)
         )
+
+        if role == ROLE_MONITOR:
+            if duty and "Học Tập" in duty:
+                badge = "Lớp Phó Học Tập"
+            elif duty and ("Nề Nếp" in duty or "Kỷ Luật" in duty):
+                badge = "Lớp Phó Nề Nếp"
+            else:
+                badge = "Lớp Trưởng Gương Mẫu"
+        else:
+            badge = "Học Sinh Tiêu Biểu"
+
         if existing_student:
             student_id = existing_student["id"]
+            if role == ROLE_MONITOR:
+                execute_commit("UPDATE students SET badge = ? WHERE id = ?", (badge, student_id))
         else:
             # Tìm vị trí ghế ngồi còn trống (5 hàng x 6 cột)
             occupied = query_all("SELECT seat_row, seat_col FROM students")
@@ -206,7 +223,6 @@ def register(body: UserRegisterRequest):
             st_count = query_one("SELECT COUNT(*) as c FROM students")["c"]
             student_code = f"HS{str(st_count + 1).zfill(2)}"
 
-            badge = "Lớp Trưởng Gương Mẫu" if role == ROLE_MONITOR else "Học Sinh Tiêu Biểu"
             student_avatar = body.avatar or f"https://api.dicebear.com/7.x/bottts/svg?seed={username}"
 
             student_id = execute_commit("""

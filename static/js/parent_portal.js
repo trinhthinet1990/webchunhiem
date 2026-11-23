@@ -67,7 +67,7 @@ const ParentPortal = {
               <div>
                 <div class="flex items-center space-x-2">
                   <h3 class="text-xl font-bold text-white">${s.full_name}</h3>
-                  <span class="px-2.5 py-0.5 text-xs rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">Lớp 12A1</span>
+                  <span class="px-2.5 py-0.5 text-xs rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">Lớp 11A5</span>
                   <span class="px-2.5 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">${points.badge}</span>
                 </div>
                 <div class="text-xs text-slate-300 mt-1">

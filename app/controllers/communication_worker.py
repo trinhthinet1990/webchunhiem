@@ -78,7 +78,7 @@ def auto_weekly_dispatch(
     now_str = datetime.now().strftime("%d/%m/%Y")
 
     for s in students:
-        msg = f"[BÁO CÁO TUẦN {now_str}] Kính gửi PH em {s['full_name']} (Lớp 12A1): Điểm thi đua tuần: {s['gamified_points']}đ ({s['badge']}). GPA hiện tại: {s['gpa']}. Kính mời phụ huynh truy cập Cổng Phụ Huynh để xem chi tiết."
+        msg = f"[BÁO CÁO TUẦN {now_str}] Kính gửi PH em {s['full_name']} (Lớp 11A5): Điểm thi đua tuần: {s['gamified_points']}đ ({s['badge']}). GPA hiện tại: {s['gpa']}. Kính mời phụ huynh truy cập Cổng Phụ Huynh để xem chi tiết."
         recipient = f"{s['parent_phone']} ({s['parent_name']})"
         cursor.execute("""
             INSERT INTO parent_communications (student_id, channel, recipient, subject, message, status, trigger_type)

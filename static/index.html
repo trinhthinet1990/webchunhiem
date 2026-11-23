@@ -33,7 +33,7 @@
             <span class="font-extrabold text-base tracking-tight text-white">HOMEROOM <span class="text-indigo-400">360°</span></span>
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30">AI Architecture</span>
           </div>
-          <p class="text-[11px] text-slate-400">Lớp 12A1 • Hệ Thống Quản Lý Chủ Nhiệm 360°</p>
+          <p class="text-[11px] text-slate-400">Lớp 11A5 • Hệ Thống Quản Lý Chủ Nhiệm 360°</p>
         </div>
       </div>
 
@@ -50,9 +50,10 @@
           <span class="text-xs text-slate-400 pl-2 hidden md:inline"><i class="fa-solid fa-user-shield text-indigo-400 mr-1"></i>Vai trò:</span>
           <select id="global-role-selector" class="bg-slate-900 text-xs text-white rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-indigo-500 font-medium">
             <option value="admin">🛡️ Quản Trị Viên (Admin)</option>
-            <option value="teacher">👑 GVCN (Cô Mai Anh)</option>
-            <option value="monitor">⭐ Cán sự (Đức Huy)</option>
-            <option value="parent_student">👨‍👩‍👧 Phụ huynh (Bảo Ngọc)</option>
+            <option value="teacher">👑 Giáo Viên Chủ Nhiệm</option>
+            <option value="monitor">⭐ Ban Cán Sự Lớp (Mod - Lớp 11A5)</option>
+            <option value="student">🎓 Học Sinh (Chỉ xem)</option>
+            <option value="parent_student">👨‍👩‍👧 Phụ Huynh (Chỉ xem)</option>
           </select>
         </div>
 
@@ -117,7 +118,7 @@
 
         <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition text-amber-400 border border-amber-500/20" data-tab="monitor_portal" onclick="App.switchTab('monitor_portal')">
           <i class="fa-solid fa-id-badge"></i>
-          <span>Cổng Cán Sự Lớp</span>
+          <span>Cổng Ban Cán Sự (Mod)</span>
         </button>
 
         <button class="nav-tab-btn px-3 py-1.5 rounded-lg flex items-center space-x-2 transition text-sky-400 border border-sky-500/20" data-tab="parent_portal" onclick="App.switchTab('parent_portal')">
@@ -399,25 +400,23 @@
             </select>
           </div>
 
-          <!-- TÙY CHỌN DÀNH CHO HỌC SINH: LỚP TRƯỞNG LÀ MOD -->
+          <!-- TÙY CHỌN DÀNH CHO HỌC SINH: BAN CÁN SỰ LỚP (3 VAI TRÒ MOD) -->
           <div id="reg-student-mod-group" class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2.5 animate-in fade-in duration-200">
             <label class="flex items-center space-x-2.5 cursor-pointer">
               <input type="checkbox" id="reg-is-class-leader" onchange="AuthModal.onClassLeaderToggle(this.checked)" class="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-900 border-slate-700">
               <span class="text-xs font-bold text-amber-300 flex items-center">
-                <i class="fa-solid fa-star text-amber-400 mr-1.5"></i> Em là Lớp Trưởng (Quyền Mod điều hành lớp)
+                <i class="fa-solid fa-star text-amber-400 mr-1.5"></i> Em giữ vai trò Ban Cán Sự Lớp (Quyền Mod lớp 11A5)
               </span>
             </label>
             <p class="text-[11px] text-slate-300 leading-relaxed">
-              Nếu là <strong>Lớp Trưởng</strong>, tài khoản của em sẽ nhận quyền <strong>Mod (Cán Sự Lớp)</strong> để hỗ trợ GVCN điểm danh đầu giờ 1-chạm và chấm điểm thi đua nề nếp tại <em>Cổng Cán Sự Lớp</em>.
+              Ban Cán Sự gồm 3 vị trí Mod: <strong>Lớp Trưởng</strong>, <strong>Lớp Phó Học Tập</strong> và <strong>Lớp Phó Nề Nếp</strong>. Có toàn quyền cập nhật, sửa, xóa nề nếp, điểm danh và học tập của các bạn trong lớp. Học sinh khác và phụ huynh chỉ có quyền xem.
             </p>
             <div id="reg-duty-selector" class="hidden pt-1 border-t border-amber-500/20">
-              <label class="block text-[11px] font-semibold text-amber-300 mb-1">Chức danh / Nhiệm vụ Mod:</label>
+              <label class="block text-[11px] font-semibold text-amber-300 mb-1">Chức danh / Nhiệm vụ Mod cụ thể:</label>
               <select id="reg-duty" class="w-full bg-slate-900 border border-amber-500/40 rounded-xl px-2.5 py-1.5 text-xs text-white">
                 <option value="Lớp Trưởng (Mod)" selected>⭐ Lớp Trưởng (Mod điều hành chung & thi đua)</option>
-                <option value="Lớp Phó Học Tập">📚 Lớp Phó Học Tập (Mod học tập & truy bài)</option>
-                <option value="Lớp Phó Nề Nếp & Kỷ Luật">⚖️ Lớp Phó Nề Nếp (Mod chấm điểm nề nếp)</option>
-                <option value="Lớp Phó Lao Động & CSVC">🧹 Lớp Phó Lao Động & CSVC</option>
-                <option value="Thủ Quỹ Lớp">💰 Thủ Quỹ Lớp</option>
+                <option value="Lớp Phó Học Tập (Mod)">📚 Lớp Phó Học Tập (Mod theo dõi học tập & điểm số)</option>
+                <option value="Lớp Phó Nề Nếp & Kỷ Luật (Mod)">⚖️ Lớp Phó Nề Nếp & Kỷ Luật (Mod theo dõi nề nếp & chuyên cần)</option>
               </select>
             </div>
           </div>
@@ -431,7 +430,7 @@
           <!-- LIÊN KẾT CON EM (DÀNH RIÊNG CHO PHỤ HUYNH) -->
           <div id="reg-student-picker" class="hidden p-3 bg-sky-500/10 border border-sky-500/30 rounded-xl space-y-2 animate-in fade-in duration-200">
             <label class="block text-xs font-semibold text-sky-300 mb-1">
-              <i class="fa-solid fa-graduation-cap text-sky-400 mr-1"></i>Học sinh liên kết (Con em trong lớp 12A1) *
+              <i class="fa-solid fa-graduation-cap text-sky-400 mr-1"></i>Học sinh liên kết (Con em trong lớp 11A5) *
             </label>
             <select id="reg-student-id" onchange="AuthModal.onStudentSelectChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500 font-medium">
               <!-- Dynamically populated from API.getStudents() -->

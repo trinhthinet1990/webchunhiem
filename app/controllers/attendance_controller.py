@@ -4,7 +4,7 @@ from datetime import datetime
 from app.database import query_all, query_one, get_db_connection
 from app.middleware.rbac_guard import require_roles, get_current_user_context
 from app.config import ROLE_TEACHER, ROLE_MONITOR, ROLE_PARENT_STUDENT
-from app.models.schemas import AttendanceBatchUpdateRequest, GamifiedPointRequest
+from app.models.schemas import AttendanceBatchUpdateRequest, GamifiedPointRequest, AdminAttendanceLogUpdateRequest
 
 router = APIRouter(tags=["Attendance & Gamified Point Controller"])
 
@@ -234,4 +234,82 @@ def get_gamification_leaderboard(context: Dict[str, Any] = Depends(get_current_u
     return {
         "top_students": top_students,
         "recent_activity": recent_logs
+    }
+
+@router.put("/api/attendance/logs/{log_id}")
+def update_attendance_log(
+    log_id: int,
+    body: AdminAttendanceLogUpdateRequest,
+    context: Dict[str, Any] = Depends(require_roles([ROLE_TEACHER, ROLE_MONITOR]))
+):
+    """
+    Sửa bản ghi điểm danh (Dành cho Giáo viên và Ban Cán Sự Lớp / Mod)
+    """
+    log = query_one("SELECT * FROM attendance_logs WHERE id = ?", (log_id,))
+    if not log:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi điểm danh")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE attendance_logs 
+        SET status = ?, note = ?, recorded_by = ?
+        WHERE id = ?
+    """, (body.status, body.note or "", context.get("duty") or context.get("username") or context["role"], log_id))
+    conn.commit()
+    conn.close()
+
+    return {"success": True, "message": "Đã cập nhật bản ghi điểm danh thành công", "id": log_id}
+
+@router.delete("/api/attendance/logs/{log_id}")
+def delete_attendance_log(
+    log_id: int,
+    context: Dict[str, Any] = Depends(require_roles([ROLE_TEACHER, ROLE_MONITOR]))
+):
+    """
+    Xóa bản ghi điểm danh (Dành cho Giáo viên và Ban Cán Sự Lớp / Mod)
+    """
+    log = query_one("SELECT * FROM attendance_logs WHERE id = ?", (log_id,))
+    if not log:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi điểm danh")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM attendance_logs WHERE id = ?", (log_id,))
+    conn.commit()
+    conn.close()
+
+    return {"success": True, "message": "Đã xóa bản ghi điểm danh thành công", "id": log_id}
+
+@router.delete("/api/gamification/logs/{log_id}")
+def delete_gamification_log(
+    log_id: int,
+    context: Dict[str, Any] = Depends(require_roles([ROLE_TEACHER, ROLE_MONITOR]))
+):
+    """
+    Xóa / Thu hồi lượt cộng/trừ điểm thi đua nề nếp (Dành cho GVCN và Ban Cán Sự Lớp / Mod)
+    Tự động hoàn tác điểm số của học sinh và tính lại Huy hiệu
+    """
+    log = query_one("SELECT * FROM gamified_points_logs WHERE id = ?", (log_id,))
+    if not log:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi điểm thi đua")
+
+    student = query_one("SELECT id, full_name, gamified_points FROM students WHERE id = ?", (log["student_id"],))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM gamified_points_logs WHERE id = ?", (log_id,))
+
+    if student:
+        new_points = max(0, student["gamified_points"] - log["points"])
+        new_badge = determine_badge(new_points)
+        cursor.execute("UPDATE students SET gamified_points = ?, badge = ? WHERE id = ?", (new_points, new_badge, student["id"]))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "message": f"Đã thu hồi bản ghi điểm thi đua và hoàn tác điểm rèn luyện cho {student['full_name'] if student else ''}",
+        "id": log_id
     }

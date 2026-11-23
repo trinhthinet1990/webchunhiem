@@ -29,7 +29,7 @@ def generate_pedagogical_report(student: Dict[str, Any], grades: List[Dict[str, 
 
     # Tone logic
     if tone == "praise" or (gpa >= 9.0 and conduct == "Tốt"):
-        overview = f"Em {name} là một trong những gương mặt tiêu biểu và xuất sắc nhất của tập thể lớp 12A1. Với tinh thần tự giác cao độ và tư duy học tập vượt trội, em đạt điểm trung bình chung {gpa} (Xếp loại {rank}). Nề nếp tác phong luôn mẫu mực, tích cực lan tỏa năng lượng tích cực cho bạn bè."
+        overview = f"Em {name} là một trong những gương mặt tiêu biểu và xuất sắc nhất của tập thể lớp 11A5. Với tinh thần tự giác cao độ và tư duy học tập vượt trội, em đạt điểm trung bình chung {gpa} (Xếp loại {rank}). Nề nếp tác phong luôn mẫu mực, tích cực lan tỏa năng lượng tích cực cho bạn bè."
         strengths = f"Tư duy xuất sắc ở các môn {', '.join(strong_subjects) if strong_subjects else 'tự nhiên và xã hội'}; đạt danh hiệu '{badge}' với {points} điểm thi đua rèn luyện."
         areas = "Tiếp tục giữ vững phong độ ổn định, bồi dưỡng thêm kỹ năng mềm và mở rộng giao lưu học thuật cấp cao."
         action_plan = "Tập trung ôn luyện chuyên sâu cho kỳ thi Đánh giá năng lực và các kỳ thi Học sinh giỏi các cấp."
@@ -169,7 +169,7 @@ def batch_generate_all_reports(
 
     return {
         "success": True,
-        "message": f"AI Report Writer Engine đã hoàn thành tự động phân tích và tạo nhận xét cho toàn bộ {count} học sinh lớp 12A1.",
+        "message": f"AI Report Writer Engine đã hoàn thành tự động phân tích và tạo nhận xét cho toàn bộ {count} học sinh lớp 11A5.",
         "term": term,
         "generated_count": count
     }

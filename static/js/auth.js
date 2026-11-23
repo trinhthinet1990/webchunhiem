@@ -189,7 +189,7 @@ const AuthModal = {
         select.innerHTML = '<option value="">-- Chưa có học sinh đăng ký (Nhập tên con bên dưới) --</option>';
         if (customContainer) customContainer.classList.remove('hidden');
       } else {
-        select.innerHTML = '<option value="">-- Chọn con em học sinh trong lớp 12A1 --</option>';
+        select.innerHTML = '<option value="">-- Chọn con em học sinh trong lớp 11A5 --</option>';
         students.forEach(st => {
           const opt = document.createElement('option');
           opt.value = st.id;

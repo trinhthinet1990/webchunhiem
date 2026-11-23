@@ -168,11 +168,30 @@ const API = {
     });
   },
 
+  async updateAttendanceLog(logId, status, note = '') {
+    return this.request(`/api/attendance/logs/${logId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, note })
+    });
+  },
+
+  async deleteAttendanceLog(logId) {
+    return this.request(`/api/attendance/logs/${logId}`, {
+      method: 'DELETE'
+    });
+  },
+
   // Gamified Points APIs
   async awardPoints(studentId, points, reason, category = 'nề nếp') {
     return this.request('/api/gamification/award', {
       method: 'POST',
       body: JSON.stringify({ student_id: studentId, points, reason, category })
+    });
+  },
+
+  async deleteGamificationLog(logId) {
+    return this.request(`/api/gamification/logs/${logId}`, {
+      method: 'DELETE'
     });
   },
 
@@ -183,6 +202,37 @@ const API = {
   // Academic APIs
   async getAcademicOverview() {
     return this.request('/api/academic/overview');
+  },
+
+  async getAllGrades() {
+    return this.request('/api/academic/all-grades');
+  },
+
+  async updateGrade(gradeId, payload) {
+    return this.request(`/api/academic/grades/${gradeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async deleteGrade(gradeId) {
+    return this.request(`/api/academic/grades/${gradeId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async updateStudentNotes(studentId, payload) {
+    return this.request(`/api/students/${studentId}/notes`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  async updateStudentInfo(studentId, payload) {
+    return this.request(`/api/students/${studentId}/info`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
   },
 
   async getDropWarnings() {

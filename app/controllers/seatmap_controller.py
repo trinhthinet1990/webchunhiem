@@ -4,14 +4,14 @@ from datetime import datetime
 from app.database import query_all, query_one, execute_commit, get_db_connection
 from app.middleware.rbac_guard import require_roles, get_current_user_context
 from app.config import ROLE_TEACHER, ROLE_MONITOR, ROLE_PARENT_STUDENT
-from app.models.schemas import SeatMapUpdateRequest, SeatSwapRequest, SmartSeatReorderRequest
+from app.models.schemas import SeatMapUpdateRequest, SeatSwapRequest, SmartSeatReorderRequest, StudentNotesUpdateRequest, StudentInfoUpdateRequest
 
 router = APIRouter(prefix="/api/seatmap", tags=["Profile & Smart SeatMap Controller"])
 
 @router.get("/layout")
 def get_classroom_seatmap(context: Dict[str, Any] = Depends(get_current_user_context)):
     """
-    Trả về toàn bộ sơ đồ chỗ ngồi của lớp 12A1 (5 hàng x 6 cột)
+    Trả về toàn bộ sơ đồ chỗ ngồi của lớp 11A5 (5 hàng x 6 cột)
     Kèm thông tin chuyên cần hôm nay để tô màu trạng thái trực quan
     """
     today = datetime.now().strftime("%Y-%m-%d")
@@ -38,7 +38,7 @@ def get_classroom_seatmap(context: Dict[str, Any] = Depends(get_current_user_con
             grid[r][c] = s
 
     return {
-        "class_name": "Lớp 12A1 - Chuyên Ban Tự Nhiên",
+        "class_name": "Lớp 11A5 - Chuyên Ban Tự Nhiên",
         "homeroom_teacher": "Giáo Viên Chủ Nhiệm",
         "total_students": len(students),
         "rows": 5,
@@ -282,4 +282,90 @@ def get_student_360_profile(
         },
         "ai_reports": reports,
         "parent_communications": comms
+    }
+
+@student_router.put("/{student_id}/notes")
+def update_student_notes(
+    student_id: int,
+    body: StudentNotesUpdateRequest,
+    context: Dict[str, Any] = Depends(require_roles([ROLE_TEACHER, ROLE_MONITOR]))
+):
+    """
+    Cập nhật ghi chú nề nếp, sức khỏe và hạnh kiểm học sinh (Dành cho GVCN và Ban Cán Sự Lớp / Mod)
+    """
+    student = query_one("SELECT id, full_name FROM students WHERE id = ?", (student_id,))
+    if not student:
+        raise HTTPException(status_code=404, detail="Không tìm thấy học sinh")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    updates = []
+    params = []
+
+    if body.teacher_notes is not None:
+        updates.append("teacher_notes = ?")
+        params.append(body.teacher_notes)
+    if body.health_notes is not None:
+        updates.append("health_notes = ?")
+        params.append(body.health_notes)
+    if body.conduct is not None:
+        updates.append("conduct = ?")
+        params.append(body.conduct)
+
+    if updates:
+        params.append(student_id)
+        cursor.execute(f"UPDATE students SET {', '.join(updates)} WHERE id = ?", tuple(params))
+        conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "message": f"Đã cập nhật tình hình và ghi chú cho em {student['full_name']}",
+        "student_id": student_id
+    }
+
+@student_router.put("/{student_id}/info")
+def update_student_info(
+    student_id: int,
+    body: StudentInfoUpdateRequest,
+    context: Dict[str, Any] = Depends(require_roles([ROLE_TEACHER, ROLE_MONITOR]))
+):
+    """
+    Cập nhật thông tin học sinh (Dành cho GVCN và Ban Cán Sự Lớp / Mod)
+    """
+    student = query_one("SELECT id, full_name FROM students WHERE id = ?", (student_id,))
+    if not student:
+        raise HTTPException(status_code=404, detail="Không tìm thấy học sinh")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    updates = []
+    params = []
+
+    if body.full_name is not None and body.full_name.strip():
+        updates.append("full_name = ?")
+        params.append(body.full_name.strip())
+    if body.gender is not None:
+        updates.append("gender = ?")
+        params.append(body.gender)
+    if body.conduct is not None:
+        updates.append("conduct = ?")
+        params.append(body.conduct)
+    if body.health_notes is not None:
+        updates.append("health_notes = ?")
+        params.append(body.health_notes)
+    if body.teacher_notes is not None:
+        updates.append("teacher_notes = ?")
+        params.append(body.teacher_notes)
+
+    if updates:
+        params.append(student_id)
+        cursor.execute(f"UPDATE students SET {', '.join(updates)} WHERE id = ?", tuple(params))
+        conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "message": f"Đã cập nhật thông tin học sinh thành công",
+        "student_id": student_id
     }
